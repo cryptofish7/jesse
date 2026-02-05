@@ -201,39 +201,39 @@ Track progress by marking tasks as complete: `- [x]`
 
 **Goal:** Orchestrate backtesting — feed data to strategy, execute signals, track results.
 
-- [ ] Create `src/core/engine.py`
-  - [ ] Implement `Engine` class
-    - [ ] Constructor: strategy, data_provider, executor, alerter (optional), persist (bool)
-    - [ ] Method: `run() -> BacktestResults | None`
-    - [ ] Method: `run_backtest() -> BacktestResults`
-    - [ ] Method: `run_forward_test()` (placeholder for now)
+- [x] Create `src/core/engine.py`
+  - [x] Implement `Engine` class
+    - [x] Constructor: strategy, data_provider, executor, alerter (optional), persist (bool)
+    - [x] Method: `run() -> BacktestResults | None`
+    - [x] Method: `run_backtest() -> BacktestResults`
+    - [x] Method: `run_forward_test()` (placeholder for now)
 
-- [ ] Implement backtest loop in `Engine`
-  - [ ] Load historical data for all declared timeframes
-  - [ ] Initialize TimeframeAggregator
-  - [ ] Call `strategy.on_init()` with historical data
-  - [ ] Iterate through candles chronologically
-    - [ ] Update TimeframeAggregator
-    - [ ] Check SL/TP for open positions
-    - [ ] Call `strategy.on_candle()`
-    - [ ] Execute returned signals
-    - [ ] Track equity over time
-  - [ ] Generate BacktestResults
+- [x] Implement backtest loop in `Engine`
+  - [x] Load historical data for all declared timeframes
+  - [x] Initialize TimeframeAggregator
+  - [x] Call `strategy.on_init()` with historical data
+  - [x] Iterate through candles chronologically
+    - [x] Update TimeframeAggregator
+    - [x] Check SL/TP for open positions
+    - [x] Call `strategy.on_candle()`
+    - [x] Execute returned signals
+    - [x] Track equity over time
+  - [x] Generate BacktestResults
 
-- [ ] Define `BacktestResults` dataclass
-  - [ ] Fields: trades, equity_curve, start_time, end_time
-  - [ ] Property: `win_rate`
-  - [ ] Property: `profit_factor`
-  - [ ] Property: `total_return`
-  - [ ] Property: `max_drawdown`
-  - [ ] Method: `summary() -> str`
+- [x] Define `BacktestResults` dataclass
+  - [x] Fields: trades, equity_curve, start_time, end_time
+  - [x] Property: `win_rate`
+  - [x] Property: `profit_factor`
+  - [x] Property: `total_return`
+  - [x] Property: `max_drawdown`
+  - [x] Method: `summary() -> str`
 
-- [ ] Write integration tests
-  - [ ] Test full backtest with MA crossover strategy
-  - [ ] Test multiple positions simultaneously
-  - [ ] Test SL/TP triggered during backtest
-  - [ ] Verify equity curve calculation
-  - [ ] Verify metrics calculation
+- [x] Write integration tests
+  - [x] Test full backtest with MA crossover strategy
+  - [x] Test multiple positions simultaneously
+  - [x] Test SL/TP triggered during backtest
+  - [x] Verify equity curve calculation
+  - [x] Verify metrics calculation
 
 ---
 
@@ -554,7 +554,7 @@ See `PRD.md` Section 6 for the full list of post-v1 enhancements.
 | 3. Data Layer — Historical | Complete | 5/5 |
 | 4. Strategy Interface | Complete | 4/4 |
 | 5. Backtest Executor | Complete | 4/4 |
-| 6. Backtest Engine | Not Started | 0/4 |
+| 6. Backtest Engine | Complete | 4/4 |
 | 7. Analysis & Visualization | Not Started | 0/4 |
 | 8. Persistence Layer | Not Started | 0/4 |
 | 9. Live Data Provider | Not Started | 0/4 |
@@ -566,4 +566,4 @@ See `PRD.md` Section 6 for the full list of post-v1 enhancements.
 | 15. Documentation & Polish | Not Started | 0/5 |
 | 16. Future Enhancements | Backlog | — |
 
-**Total: 21/61 tasks complete**
+**Total: 25/61 tasks complete**
