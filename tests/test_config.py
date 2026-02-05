@@ -24,7 +24,7 @@ class TestSettings:
         assert s.default_history_candles == 525600
 
     def test_exchange_rejects_invalid(self):
-        with pytest.raises(Exception):
+        with pytest.raises(ValueError):
             Settings(exchange="kraken", _env_file=None)
 
     def test_exchange_accepts_valid(self):
@@ -33,9 +33,9 @@ class TestSettings:
             assert s.exchange == ex
 
     def test_initial_balance_must_be_positive(self):
-        with pytest.raises(Exception):
+        with pytest.raises(ValueError):
             Settings(initial_balance=0, _env_file=None)
-        with pytest.raises(Exception):
+        with pytest.raises(ValueError):
             Settings(initial_balance=-100, _env_file=None)
 
     def test_log_level_normalized_to_uppercase(self):
@@ -43,7 +43,7 @@ class TestSettings:
         assert s.log_level == "DEBUG"
 
     def test_log_level_rejects_invalid(self):
-        with pytest.raises(Exception):
+        with pytest.raises(ValueError):
             Settings(log_level="TRACE", _env_file=None)
 
 
@@ -86,8 +86,13 @@ class TestCLI:
 
     def test_backtest_placeholder(self):
         result = self._run(
-            "backtest", "--strategy", "TestStrat",
-            "--start", "2024-01-01", "--end", "2024-06-01",
+            "backtest",
+            "--strategy",
+            "TestStrat",
+            "--start",
+            "2024-01-01",
+            "--end",
+            "2024-06-01",
         )
         assert result.returncode == 0
         assert "Not yet implemented" in result.stdout
@@ -99,8 +104,13 @@ class TestCLI:
 
     def test_fetch_data_placeholder(self):
         result = self._run(
-            "fetch-data", "--timeframe", "1m",
-            "--start", "2024-01-01", "--end", "2024-06-01",
+            "fetch-data",
+            "--timeframe",
+            "1m",
+            "--start",
+            "2024-01-01",
+            "--end",
+            "2024-06-01",
         )
         assert result.returncode == 0
         assert "Not yet implemented" in result.stdout
