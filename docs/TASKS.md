@@ -127,35 +127,35 @@ Track progress by marking tasks as complete: `- [x]`
 
 **Goal:** Define the strategy base class and multi-timeframe data delivery.
 
-- [ ] Create `src/strategy/base.py`
-  - [ ] Define `Strategy` ABC
-    - [ ] Class attribute: `timeframes: list[str]`
-    - [ ] Abstract method: `on_candle(data, portfolio) -> list[Signal]`
-    - [ ] Optional method: `on_init(data)`
-    - [ ] Optional method: `get_state() -> dict` (for persistence)
-    - [ ] Optional method: `set_state(state: dict)` (for recovery)
+- [x] Create `src/strategy/base.py`
+  - [x] Define `Strategy` ABC
+    - [x] Class attribute: `timeframes: list[str]`
+    - [x] Abstract method: `on_candle(data, portfolio) -> list[Signal]`
+    - [x] Optional method: `on_init(data)`
+    - [x] Optional method: `get_state() -> dict` (for persistence)
+    - [x] Optional method: `set_state(state: dict)` (for recovery)
 
-- [ ] Create `src/core/timeframe.py`
-  - [ ] Implement `TimeframeAggregator` class
-    - [ ] Track multiple timeframes simultaneously
-    - [ ] Align higher timeframe candles to lower timeframe events
-    - [ ] Build `MultiTimeframeData` on each candle
-    - [ ] Manage history length (default: 1 year per timeframe)
-  - [ ] Implement timeframe utilities
-    - [ ] `get_timeframe_minutes(tf: str) -> int`
-    - [ ] `get_lower_timeframe(tf: str) -> str | None`
-    - [ ] `is_timeframe_complete(tf: str, timestamp: datetime) -> bool`
+- [x] Create `src/core/timeframe.py`
+  - [x] Implement `TimeframeAggregator` class
+    - [x] Track multiple timeframes simultaneously
+    - [x] Align higher timeframe candles to lower timeframe events
+    - [x] Build `MultiTimeframeData` on each candle
+    - [x] Manage history length (default: 1 year per timeframe)
+  - [x] Implement timeframe utilities
+    - [x] `get_timeframe_minutes(tf: str) -> int`
+    - [x] `get_lower_timeframe(tf: str) -> str | None`
+    - [x] `is_timeframe_complete(tf: str, timestamp: datetime) -> bool`
 
-- [ ] Create example strategy
-  - [ ] Create `src/strategy/examples/ma_crossover.py`
-    - [ ] Simple moving average crossover
-    - [ ] Configurable parameters (fast_period, slow_period, risk_percent)
-    - [ ] Demonstrate proper Signal usage
+- [x] Create example strategy
+  - [x] Create `src/strategy/examples/ma_crossover.py`
+    - [x] Simple moving average crossover
+    - [x] Configurable parameters (fast_period, slow_period, risk_percent)
+    - [x] Demonstrate proper Signal usage
 
-- [ ] Write unit tests
-  - [ ] Test TimeframeAggregator alignment
-  - [ ] Test MultiTimeframeData construction
-  - [ ] Test example strategy signal generation
+- [x] Write unit tests
+  - [x] Test TimeframeAggregator alignment
+  - [x] Test MultiTimeframeData construction
+  - [x] Test example strategy signal generation
 
 ---
 
@@ -552,7 +552,7 @@ See `PRD.md` Section 6 for the full list of post-v1 enhancements.
 | 1. Project Setup | Complete | 5/5 |
 | 2. Core Types | Complete | 3/3 |
 | 3. Data Layer — Historical | Complete | 5/5 |
-| 4. Strategy Interface | Not Started | 0/4 |
+| 4. Strategy Interface | Complete | 4/4 |
 | 5. Backtest Executor | Not Started | 0/4 |
 | 6. Backtest Engine | Not Started | 0/4 |
 | 7. Analysis & Visualization | Not Started | 0/4 |
@@ -566,4 +566,4 @@ See `PRD.md` Section 6 for the full list of post-v1 enhancements.
 | 15. Documentation & Polish | Not Started | 0/5 |
 | 16. Future Enhancements | Backlog | — |
 
-**Total: 13/61 tasks complete**
+**Total: 17/61 tasks complete**
