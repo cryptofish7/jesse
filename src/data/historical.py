@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from collections.abc import Awaitable, Callable
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import ccxt.async_support as ccxt
 
@@ -34,6 +34,14 @@ def _create_exchange() -> ccxt.Exchange:
     if cls is None:
         raise ValueError(f"Unsupported exchange: {settings.exchange}")
     return cls({"enableRateLimit": True})
+
+
+def _filter_range(candles: list[Candle], start_ms: int, end_ms: int) -> list[Candle]:
+    """Filter candles to those within the given timestamp range (inclusive)."""
+    return [
+        c for c in candles
+        if start_ms <= int(c.timestamp.timestamp() * 1000) <= end_ms
+    ]
 
 
 def _timeframe_ms(tf: str) -> int:
@@ -90,7 +98,7 @@ class HistoricalDataProvider(DataProvider):
 
             if not fetch_ranges:
                 # Cache covers the full range
-                return [c for c in cached if start_ms <= int(c.timestamp.timestamp() * 1000) <= end_ms]
+                return _filter_range(cached, start_ms, end_ms)
 
             # Fetch missing ranges
             new_candles: list[Candle] = []
@@ -103,7 +111,7 @@ class HistoricalDataProvider(DataProvider):
             all_candles = orderflow.approximate_cvd(all_candles)
             cache.write_candles(symbol, timeframe, all_candles)
 
-            return [c for c in all_candles if start_ms <= int(c.timestamp.timestamp() * 1000) <= end_ms]
+            return _filter_range(all_candles, start_ms, end_ms)
 
         # No cache — fetch everything
         fetched = await self._fetch_from_exchange(symbol, timeframe, start_ms, end_ms)
@@ -128,8 +136,8 @@ class HistoricalDataProvider(DataProvider):
             "Fetching %s %s candles from %s to %s",
             symbol,
             timeframe,
-            datetime.fromtimestamp(start_ms / 1000, tz=timezone.utc),
-            datetime.fromtimestamp(end_ms / 1000, tz=timezone.utc),
+            datetime.fromtimestamp(start_ms / 1000, tz=UTC),
+            datetime.fromtimestamp(end_ms / 1000, tz=UTC),
         )
 
         while since < end_ms:
@@ -153,7 +161,7 @@ class HistoricalDataProvider(DataProvider):
                 break
 
             for row in ohlcv:
-                ts = datetime.fromtimestamp(row[0] / 1000, tz=timezone.utc)
+                ts = datetime.fromtimestamp(row[0] / 1000, tz=UTC)
                 if int(ts.timestamp() * 1000) > end_ms:
                     break
                 all_candles.append(Candle(
@@ -168,7 +176,8 @@ class HistoricalDataProvider(DataProvider):
             last_ts = ohlcv[-1][0]
             since = last_ts + tf_ms
 
-            logger.debug("Fetched %d candles, up to %s", len(ohlcv), datetime.fromtimestamp(last_ts / 1000, tz=timezone.utc))
+            up_to = datetime.fromtimestamp(last_ts / 1000, tz=UTC)
+            logger.debug("Fetched %d candles, up to %s", len(ohlcv), up_to)
 
         logger.info("Total fetched: %d candles", len(all_candles))
         return all_candles

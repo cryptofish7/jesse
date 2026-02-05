@@ -3,14 +3,14 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from src.core.types import Candle
 from src.config import settings
+from src.core.types import Candle
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +48,7 @@ def read_candles(symbol: str, timeframe: str) -> list[Candle]:
     for i in range(table.num_rows):
         ts = table.column("timestamp")[i].as_py()
         if ts.tzinfo is None:
-            ts = ts.replace(tzinfo=timezone.utc)
+            ts = ts.replace(tzinfo=UTC)
         candles.append(Candle(
             timestamp=ts,
             open=table.column("open")[i].as_py(),

@@ -1,8 +1,7 @@
 """Tests for the data layer: cache, orderflow, and historical provider."""
 
-from datetime import datetime, timezone
-from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
+from datetime import UTC, datetime
+from unittest.mock import AsyncMock
 
 import pytest
 
@@ -10,13 +9,12 @@ from src.core.types import Candle
 from src.data import cache, orderflow
 from src.data.historical import HistoricalDataProvider
 
-
 # --- Helpers ---
 
 
 def _make_candle(ts_hour: int, close: float = 100.0, volume: float = 10.0, **kw) -> Candle:
     return Candle(
-        timestamp=datetime(2024, 1, 1, ts_hour, tzinfo=timezone.utc),
+        timestamp=datetime(2024, 1, 1, ts_hour, tzinfo=UTC),
         open=100.0,
         high=110.0,
         low=90.0,
@@ -98,7 +96,7 @@ class TestOrderflow:
     def test_approximate_cvd_bullish(self):
         candles = [
             Candle(
-                timestamp=datetime(2024, 1, 1, tzinfo=timezone.utc),
+                timestamp=datetime(2024, 1, 1, tzinfo=UTC),
                 open=100.0, high=110.0, low=90.0, close=105.0,
                 volume=100.0,
             ),
@@ -111,7 +109,7 @@ class TestOrderflow:
     def test_approximate_cvd_bearish(self):
         candles = [
             Candle(
-                timestamp=datetime(2024, 1, 1, tzinfo=timezone.utc),
+                timestamp=datetime(2024, 1, 1, tzinfo=UTC),
                 open=105.0, high=110.0, low=90.0, close=100.0,
                 volume=100.0,
             ),
@@ -122,7 +120,7 @@ class TestOrderflow:
     def test_approximate_cvd_doji(self):
         candles = [
             Candle(
-                timestamp=datetime(2024, 1, 1, tzinfo=timezone.utc),
+                timestamp=datetime(2024, 1, 1, tzinfo=UTC),
                 open=100.0, high=110.0, low=90.0, close=100.0,
                 volume=100.0,
             ),
@@ -133,11 +131,11 @@ class TestOrderflow:
     def test_approximate_cvd_cumulative(self):
         candles = [
             Candle(
-                timestamp=datetime(2024, 1, 1, 0, tzinfo=timezone.utc),
+                timestamp=datetime(2024, 1, 1, 0, tzinfo=UTC),
                 open=100.0, high=110.0, low=90.0, close=105.0, volume=100.0,
             ),
             Candle(
-                timestamp=datetime(2024, 1, 1, 1, tzinfo=timezone.utc),
+                timestamp=datetime(2024, 1, 1, 1, tzinfo=UTC),
                 open=105.0, high=110.0, low=90.0, close=103.0, volume=50.0,
             ),
         ]
@@ -149,7 +147,7 @@ class TestOrderflow:
     def test_approximate_cvd_preserves_existing(self):
         candles = [
             Candle(
-                timestamp=datetime(2024, 1, 1, tzinfo=timezone.utc),
+                timestamp=datetime(2024, 1, 1, tzinfo=UTC),
                 open=100.0, high=110.0, low=90.0, close=105.0,
                 volume=100.0, cvd=42.0,
             ),
@@ -160,12 +158,12 @@ class TestOrderflow:
     def test_enrich_with_oi(self):
         candles = [
             Candle(
-                timestamp=datetime(2024, 1, 1, tzinfo=timezone.utc),
+                timestamp=datetime(2024, 1, 1, tzinfo=UTC),
                 open=100.0, high=110.0, low=90.0, close=105.0,
                 volume=100.0,
             ),
         ]
-        ts_ms = int(datetime(2024, 1, 1, tzinfo=timezone.utc).timestamp() * 1000)
+        ts_ms = int(datetime(2024, 1, 1, tzinfo=UTC).timestamp() * 1000)
         oi_data = {ts_ms: 5000.0}
         result = orderflow.enrich_with_oi(candles, oi_data)
         assert result[0].open_interest == 5000.0
@@ -173,7 +171,7 @@ class TestOrderflow:
     def test_enrich_with_oi_no_match(self):
         candles = [
             Candle(
-                timestamp=datetime(2024, 1, 1, tzinfo=timezone.utc),
+                timestamp=datetime(2024, 1, 1, tzinfo=UTC),
                 open=100.0, high=110.0, low=90.0, close=105.0,
                 volume=100.0, open_interest=0.0,
             ),
@@ -198,8 +196,8 @@ class TestHistoricalDataProvider:
         result = await provider.get_historical_candles(
             "BTC/USDT:USDT",
             "1m",
-            datetime(2024, 1, 1, 0, tzinfo=timezone.utc),
-            datetime(2024, 1, 1, 4, tzinfo=timezone.utc),
+            datetime(2024, 1, 1, 0, tzinfo=UTC),
+            datetime(2024, 1, 1, 4, tzinfo=UTC),
         )
         assert len(result) == 5
         # No exchange call needed
@@ -212,7 +210,7 @@ class TestHistoricalDataProvider:
         mock_exchange = AsyncMock()
         mock_ohlcv = [
             [
-                int(datetime(2024, 1, 1, i, tzinfo=timezone.utc).timestamp() * 1000),
+                int(datetime(2024, 1, 1, i, tzinfo=UTC).timestamp() * 1000),
                 100.0, 110.0, 90.0, 105.0, 1000.0,
             ]
             for i in range(3)
@@ -225,8 +223,8 @@ class TestHistoricalDataProvider:
         result = await provider.get_historical_candles(
             "BTC/USDT:USDT",
             "1m",
-            datetime(2024, 1, 1, 0, tzinfo=timezone.utc),
-            datetime(2024, 1, 1, 3, tzinfo=timezone.utc),
+            datetime(2024, 1, 1, 0, tzinfo=UTC),
+            datetime(2024, 1, 1, 3, tzinfo=UTC),
         )
         assert len(result) == 3
         assert result[0].close == 105.0
@@ -244,8 +242,8 @@ class TestHistoricalDataProvider:
             await provider.get_historical_candles(
                 "BTC/USDT:USDT",
                 "2m",
-                datetime(2024, 1, 1, tzinfo=timezone.utc),
-                datetime(2024, 1, 2, tzinfo=timezone.utc),
+                datetime(2024, 1, 1, tzinfo=UTC),
+                datetime(2024, 1, 2, tzinfo=UTC),
             )
 
     @pytest.mark.asyncio(loop_scope="function")
