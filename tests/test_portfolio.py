@@ -2,6 +2,8 @@
 
 from datetime import datetime
 
+import pytest
+
 from src.core.portfolio import Portfolio
 from src.core.types import Position, Trade
 
@@ -48,17 +50,19 @@ class TestPortfolio:
         assert p.positions == []
         assert p.trades == []
 
-    def test_equity_at_no_positions(self):
+    def test_equity_no_positions(self):
         p = Portfolio(initial_balance=10000.0)
-        assert p.equity_at(50000.0) == 10000.0
+        p.update_price(50000.0)
+        assert p.equity == 10000.0
 
-    def test_equity_at_with_position(self):
+    def test_equity_with_position(self):
         p = Portfolio(initial_balance=10000.0)
         pos = _make_position(entry_price=100.0, size=1.0, size_usd=100.0)
         p.open_position(pos)
+        p.update_price(110.0)
         # balance = 10000 - 100 = 9900
         # unrealized pnl at 110 = (110 - 100) * 1.0 = 10
-        assert p.equity_at(110.0) == 9910.0
+        assert p.equity == 9910.0
 
     def test_open_position(self):
         p = Portfolio(initial_balance=10000.0)
@@ -118,3 +122,24 @@ class TestPortfolio:
     def test_explicit_balance(self):
         p = Portfolio(initial_balance=10000.0, balance=5000.0)
         assert p.balance == 5000.0
+
+    def test_zero_balance_preserved(self):
+        p = Portfolio(initial_balance=10000.0, balance=0.0)
+        assert p.balance == 0.0
+
+    def test_close_nonexistent_position_raises(self):
+        p = Portfolio(initial_balance=10000.0)
+        trade = _make_trade(id="bad_id")
+        with pytest.raises(ValueError, match="not found"):
+            p.close_position("bad_id", trade)
+
+    def test_update_price_affects_equity(self):
+        p = Portfolio(initial_balance=10000.0)
+        pos = _make_position(entry_price=100.0, size=1.0, size_usd=100.0)
+        p.open_position(pos)
+
+        p.update_price(100.0)
+        assert p.equity == 9900.0  # unrealized pnl = 0
+
+        p.update_price(120.0)
+        assert p.equity == 9920.0  # unrealized pnl = 20

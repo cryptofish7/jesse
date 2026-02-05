@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from src.core.types import Candle, MultiTimeframeData, Signal, TimeframeData, Trade
+from src.core.types import Candle, MultiTimeframeData, Position, Signal, TimeframeData, Trade
 
 
 class TestCandle:
@@ -83,7 +83,6 @@ class TestSignal:
 
 class TestPosition:
     def test_unrealized_pnl_long_profit(self):
-        from src.core.types import Position
 
         p = Position(
             id="p1",
@@ -98,7 +97,6 @@ class TestPosition:
         assert p.unrealized_pnl(110.0) == 10.0
 
     def test_unrealized_pnl_long_loss(self):
-        from src.core.types import Position
 
         p = Position(
             id="p1",
@@ -113,7 +111,6 @@ class TestPosition:
         assert p.unrealized_pnl(90.0) == -10.0
 
     def test_unrealized_pnl_short_profit(self):
-        from src.core.types import Position
 
         p = Position(
             id="p1",
@@ -128,7 +125,6 @@ class TestPosition:
         assert p.unrealized_pnl(90.0) == 10.0
 
     def test_unrealized_pnl_short_loss(self):
-        from src.core.types import Position
 
         p = Position(
             id="p1",
@@ -143,7 +139,6 @@ class TestPosition:
         assert p.unrealized_pnl(110.0) == -10.0
 
     def test_generate_id_unique(self):
-        from src.core.types import Position
 
         ids = {Position.generate_id() for _ in range(100)}
         assert len(ids) == 100

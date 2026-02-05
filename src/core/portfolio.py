@@ -12,28 +12,24 @@ class Portfolio:
     """Tracks open positions, closed trades, and account balance."""
 
     initial_balance: float
-    balance: float = 0.0
+    balance: float | None = None
     positions: list[Position] = field(default_factory=list)
     trades: list[Trade] = field(default_factory=list)
+    _current_price: float = 0.0
 
     def __post_init__(self) -> None:
-        if self.balance == 0.0:
+        if self.balance is None:
             self.balance = self.initial_balance
+
+    def update_price(self, price: float) -> None:
+        """Update the last known market price for equity calculation."""
+        self._current_price = price
 
     @property
     def equity(self) -> float:
-        """Balance plus unrealized PnL of all open positions.
-
-        Note: requires a current price to be meaningful. When no positions
-        are open, equity equals balance.  For positions, we use entry_price
-        as a conservative fallback (unrealized PnL = 0).
-        """
-        return self.balance
-
-    def equity_at(self, current_price: float) -> float:
-        """Balance plus unrealized PnL at a given market price."""
-        unrealized = sum(p.unrealized_pnl(current_price) for p in self.positions)
-        return self.balance + unrealized
+        """Balance plus unrealized PnL of all open positions."""
+        unrealized = sum(p.unrealized_pnl(self._current_price) for p in self.positions)
+        return self.balance + unrealized  # type: ignore[operator]
 
     @property
     def has_position(self) -> bool:
@@ -45,10 +41,13 @@ class Portfolio:
     def open_position(self, position: Position) -> None:
         """Add a position and lock its margin from balance."""
         self.positions.append(position)
-        self.balance -= position.size_usd
+        self.balance -= position.size_usd  # type: ignore[operator]
 
     def close_position(self, position_id: str, trade: Trade) -> None:
         """Remove a position and credit the realized PnL to balance."""
+        original_count = len(self.positions)
         self.positions = [p for p in self.positions if p.id != position_id]
+        if len(self.positions) == original_count:
+            raise ValueError(f"Position '{position_id}' not found")
         self.trades.append(trade)
-        self.balance += trade.size_usd + trade.pnl
+        self.balance += trade.size_usd + trade.pnl  # type: ignore[operator]
