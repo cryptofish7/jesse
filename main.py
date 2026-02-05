@@ -34,10 +34,7 @@ async def cmd_forward_test(args: argparse.Namespace) -> None:
         args.strategy,
         args.initial_balance,
     )
-    print(
-        f"Forward test mode: strategy={args.strategy}, "
-        f"initial_balance={args.initial_balance}"
-    )
+    print(f"Forward test mode: strategy={args.strategy}, initial_balance={args.initial_balance}")
     print("(Not yet implemented)")
 
 
