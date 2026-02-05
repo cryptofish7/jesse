@@ -163,37 +163,37 @@ Track progress by marking tasks as complete: `- [x]`
 
 **Goal:** Implement simulated trade execution for backtesting.
 
-- [ ] Create `src/execution/executor.py`
-  - [ ] Define `Executor` ABC
-    - [ ] Abstract method: `execute(signal, price, portfolio) -> Position | Trade | None`
-    - [ ] Abstract method: `close_position(position, price, reason) -> Trade`
+- [x] Create `src/execution/executor.py`
+  - [x] Define `Executor` ABC
+    - [x] Abstract method: `execute(signal, price, portfolio) -> Position | Trade | None`
+    - [x] Abstract method: `close_position(position, price, reason) -> Trade`
 
-- [ ] Create `src/execution/backtest.py`
-  - [ ] Implement `BacktestExecutor` class
-    - [ ] Fill at candle close price
-    - [ ] Calculate position size from percentage
-    - [ ] Generate unique position IDs
-    - [ ] Create Position on open signals
-    - [ ] Create Trade on close signals
+- [x] Create `src/execution/backtest.py`
+  - [x] Implement `BacktestExecutor` class
+    - [x] Fill at candle close price
+    - [x] Calculate position size from percentage
+    - [x] Generate unique position IDs
+    - [x] Create Position on open signals
+    - [x] Create Trade on close signals
 
-- [ ] Create `src/execution/sl_tp.py`
-  - [ ] Implement `SLTPMonitor` class
-    - [ ] Method: `check(position, candle) -> Literal['stop_loss', 'take_profit'] | None`
-    - [ ] Handle long positions (SL below, TP above)
-    - [ ] Handle short positions (SL above, TP below)
-  - [ ] Implement drill-down resolution
-    - [ ] Method: `resolve(position, candle, available_candles) -> Literal['stop_loss', 'take_profit']`
-    - [ ] Fetch lower timeframe candles when both hit
-    - [ ] Recursively drill down (4h → 1h → 15m → 5m → 1m)
-    - [ ] Conservative fallback at 1m (assume SL)
+- [x] Create `src/execution/sl_tp.py`
+  - [x] Implement `SLTPMonitor` class
+    - [x] Method: `check(position, candle) -> Literal['stop_loss', 'take_profit'] | None`
+    - [x] Handle long positions (SL below, TP above)
+    - [x] Handle short positions (SL above, TP below)
+  - [x] Implement drill-down resolution
+    - [x] Method: `resolve(position, candle, available_candles) -> Literal['stop_loss', 'take_profit']`
+    - [x] Fetch lower timeframe candles when both hit
+    - [x] Recursively drill down (4h → 1h → 15m → 5m → 1m)
+    - [x] Conservative fallback at 1m (assume SL)
 
-- [ ] Write unit tests
-  - [ ] Test basic SL hit detection
-  - [ ] Test basic TP hit detection
-  - [ ] Test drill-down when both hit same candle
-  - [ ] Test conservative fallback at 1m
-  - [ ] Test position size calculation
-  - [ ] Test PnL calculation
+- [x] Write unit tests
+  - [x] Test basic SL hit detection
+  - [x] Test basic TP hit detection
+  - [x] Test drill-down when both hit same candle
+  - [x] Test conservative fallback at 1m
+  - [x] Test position size calculation
+  - [x] Test PnL calculation
 
 ---
 
@@ -553,7 +553,7 @@ See `PRD.md` Section 6 for the full list of post-v1 enhancements.
 | 2. Core Types | Complete | 3/3 |
 | 3. Data Layer — Historical | Complete | 5/5 |
 | 4. Strategy Interface | Complete | 4/4 |
-| 5. Backtest Executor | Not Started | 0/4 |
+| 5. Backtest Executor | Complete | 4/4 |
 | 6. Backtest Engine | Not Started | 0/4 |
 | 7. Analysis & Visualization | Not Started | 0/4 |
 | 8. Persistence Layer | Not Started | 0/4 |
@@ -566,4 +566,4 @@ See `PRD.md` Section 6 for the full list of post-v1 enhancements.
 | 15. Documentation & Polish | Not Started | 0/5 |
 | 16. Future Enhancements | Backlog | — |
 
-**Total: 17/61 tasks complete**
+**Total: 21/61 tasks complete**
