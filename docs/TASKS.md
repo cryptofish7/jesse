@@ -80,46 +80,46 @@ Track progress by marking tasks as complete: `- [x]`
 
 **Goal:** Fetch and cache historical OHLCV data from exchanges.
 
-- [ ] Create `src/data/provider.py`
-  - [ ] Define `DataProvider` ABC
-    - [ ] Abstract method: `get_historical_candles()`
-    - [ ] Abstract method: `subscribe()`
-    - [ ] Abstract method: `unsubscribe()`
+- [x] Create `src/data/provider.py`
+  - [x] Define `DataProvider` ABC
+    - [x] Abstract method: `get_historical_candles()`
+    - [x] Abstract method: `subscribe()`
+    - [x] Abstract method: `unsubscribe()`
 
-- [ ] Create `src/data/cache.py`
-  - [ ] Implement Parquet read function
-  - [ ] Implement Parquet write function
-  - [ ] Implement cache path generation (`{symbol}_{timeframe}.parquet`)
-  - [ ] Implement cache existence check
-  - [ ] Implement cache date range detection
+- [x] Create `src/data/cache.py`
+  - [x] Implement Parquet read function
+  - [x] Implement Parquet write function
+  - [x] Implement cache path generation (`{symbol}_{timeframe}.parquet`)
+  - [x] Implement cache existence check
+  - [x] Implement cache date range detection
 
-- [ ] Create `src/data/historical.py`
-  - [ ] Implement `HistoricalDataProvider` class
-    - [ ] Initialize ccxt exchange client
-    - [ ] Implement `get_historical_candles()`
-      - [ ] Check cache first
-      - [ ] Fetch missing data from exchange
-      - [ ] Handle pagination (exchange limits)
-      - [ ] Merge with cached data
-      - [ ] Save updated cache
-    - [ ] Support all timeframes (1m, 5m, 15m, 1h, 4h, 1d, 1w)
-    - [ ] Handle rate limiting with retries
+- [x] Create `src/data/historical.py`
+  - [x] Implement `HistoricalDataProvider` class
+    - [x] Initialize ccxt exchange client
+    - [x] Implement `get_historical_candles()`
+      - [x] Check cache first
+      - [x] Fetch missing data from exchange
+      - [x] Handle pagination (exchange limits)
+      - [x] Merge with cached data
+      - [x] Save updated cache
+    - [x] Support all timeframes (1m, 5m, 15m, 1h, 4h, 1d, 1w)
+    - [x] Handle rate limiting with retries
 
-- [ ] Create `src/data/orderflow.py`
-  - [ ] Implement Open Interest fetching
-    - [ ] Check exchange API for OI endpoint
-    - [ ] Fetch and align with candle timestamps
-  - [ ] Implement CVD calculation
-    - [ ] Check if exchange provides aggregated delta
-    - [ ] If not, approximate: `cvd += volume * sign(close - open)`
-    - [ ] Store as cumulative running total
+- [x] Create `src/data/orderflow.py`
+  - [x] Implement Open Interest fetching
+    - [x] Check exchange API for OI endpoint
+    - [x] Fetch and align with candle timestamps
+  - [x] Implement CVD calculation
+    - [x] Check if exchange provides aggregated delta
+    - [x] If not, approximate: `cvd += volume * sign(close - open)`
+    - [x] Store as cumulative running total
 
-- [ ] Write integration tests for data layer
-  - [ ] Test fetching 1 day of 1m candles
-  - [ ] Test cache read/write
-  - [ ] Test cache merge (existing + new data)
-  - [ ] Test OI data fetching
-  - [ ] Test CVD calculation
+- [x] Write integration tests for data layer
+  - [x] Test fetching 1 day of 1m candles
+  - [x] Test cache read/write
+  - [x] Test cache merge (existing + new data)
+  - [x] Test OI data fetching
+  - [x] Test CVD calculation
 
 ---
 
@@ -551,7 +551,7 @@ See `PRD.md` Section 6 for the full list of post-v1 enhancements.
 |-----------|--------|-------|
 | 1. Project Setup | Complete | 5/5 |
 | 2. Core Types | Complete | 3/3 |
-| 3. Data Layer — Historical | Not Started | 0/5 |
+| 3. Data Layer — Historical | Complete | 5/5 |
 | 4. Strategy Interface | Not Started | 0/4 |
 | 5. Backtest Executor | Not Started | 0/4 |
 | 6. Backtest Engine | Not Started | 0/4 |
@@ -566,4 +566,4 @@ See `PRD.md` Section 6 for the full list of post-v1 enhancements.
 | 15. Documentation & Polish | Not Started | 0/5 |
 | 16. Future Enhancements | Backlog | — |
 
-**Total: 8/61 tasks complete**
+**Total: 13/61 tasks complete**

@@ -1,6 +1,6 @@
 # Runtime data
-data/
-output/
+/data/
+/output/
 
 # Environment
 .env
@@ -9,6 +9,7 @@ venv/
 
 # Python
 __pycache__/
+.coverage
 *.py[cod]
 *$py.class
 *.egg-info/
