@@ -270,6 +270,7 @@ engine.run()  # Runs forever
 
 - Always use timezone-aware datetimes (`timezone.utc`) — Parquet strips timezone info, so re-add it when reading back.
 - Don't use `== 0.0` for float sentinel checks — use `None` sentinel instead to avoid ambiguity with legitimate zero values.
+- Always run the planning subagent before implementing a task — even when the scope seems obvious. The planner catches bugs, edge cases, and design issues that are easy to miss when jumping straight to code.
 
 <!--
 Format: "Don't X — do Y instead" or "Always X before Y"
