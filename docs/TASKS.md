@@ -42,37 +42,37 @@ Track progress by marking tasks as complete: `- [x]`
 
 **Goal:** Define all data structures used throughout the system.
 
-- [ ] Create `src/core/types.py`
-  - [ ] Define `Candle` dataclass
-    - [ ] Fields: timestamp, open, high, low, close, volume, open_interest, cvd
-    - [ ] Add helper methods (is_bullish, is_bearish, range, body)
-  - [ ] Define `Signal` dataclass
-    - [ ] Fields: direction, size_percent, stop_loss, take_profit, position_id
-    - [ ] Add factory methods: `open_long()`, `open_short()`, `close()`
-  - [ ] Define `Position` dataclass
-    - [ ] Fields: id, side, entry_price, entry_time, size, size_usd, stop_loss, take_profit
-    - [ ] Add `unrealized_pnl()` method
-  - [ ] Define `Trade` dataclass
-    - [ ] Fields: id, side, entry_price, exit_price, entry_time, exit_time, size, pnl, pnl_percent, exit_reason
-  - [ ] Define `TimeframeData` dataclass
-    - [ ] Fields: latest, history
-  - [ ] Define `MultiTimeframeData` class (dict wrapper)
+- [x] Create `src/core/types.py`
+  - [x] Define `Candle` dataclass
+    - [x] Fields: timestamp, open, high, low, close, volume, open_interest, cvd
+    - [x] Add helper methods (is_bullish, is_bearish, range, body)
+  - [x] Define `Signal` dataclass
+    - [x] Fields: direction, size_percent, stop_loss, take_profit, position_id
+    - [x] Add factory methods: `open_long()`, `open_short()`, `close()`
+  - [x] Define `Position` dataclass
+    - [x] Fields: id, side, entry_price, entry_time, size, size_usd, stop_loss, take_profit
+    - [x] Add `unrealized_pnl()` method
+  - [x] Define `Trade` dataclass
+    - [x] Fields: id, side, entry_price, exit_price, entry_time, exit_time, size, pnl, pnl_percent, exit_reason
+  - [x] Define `TimeframeData` dataclass
+    - [x] Fields: latest, history
+  - [x] Define `MultiTimeframeData` class (dict wrapper)
 
-- [ ] Create `src/core/portfolio.py`
-  - [ ] Define `Portfolio` class
-    - [ ] Fields: initial_balance, balance, positions, trades
-    - [ ] Property: `equity` (balance + unrealized PnL)
-    - [ ] Property: `has_position`
-    - [ ] Method: `get_position(id)`
-    - [ ] Method: `open_position(position)`
-    - [ ] Method: `close_position(position_id, trade)`
+- [x] Create `src/core/portfolio.py`
+  - [x] Define `Portfolio` class
+    - [x] Fields: initial_balance, balance, positions, trades
+    - [x] Property: `equity` (balance + unrealized PnL)
+    - [x] Property: `has_position`
+    - [x] Method: `get_position(id)`
+    - [x] Method: `open_position(position)`
+    - [x] Method: `close_position(position_id, trade)`
 
-- [ ] Write unit tests for core types
-  - [ ] Test Candle helper methods
-  - [ ] Test Signal factory methods
-  - [ ] Test Position unrealized PnL calculation
-  - [ ] Test Portfolio equity calculation
-  - [ ] Test Portfolio position management
+- [x] Write unit tests for core types
+  - [x] Test Candle helper methods
+  - [x] Test Signal factory methods
+  - [x] Test Position unrealized PnL calculation
+  - [x] Test Portfolio equity calculation
+  - [x] Test Portfolio position management
 
 ---
 
@@ -550,7 +550,7 @@ See `PRD.md` Section 6 for the full list of post-v1 enhancements.
 | Milestone | Status | Tasks |
 |-----------|--------|-------|
 | 1. Project Setup | Complete | 5/5 |
-| 2. Core Types | Not Started | 0/3 |
+| 2. Core Types | Complete | 3/3 |
 | 3. Data Layer — Historical | Not Started | 0/5 |
 | 4. Strategy Interface | Not Started | 0/4 |
 | 5. Backtest Executor | Not Started | 0/4 |
@@ -566,4 +566,4 @@ See `PRD.md` Section 6 for the full list of post-v1 enhancements.
 | 15. Documentation & Polish | Not Started | 0/5 |
 | 16. Future Enhancements | Backlog | — |
 
-**Total: 5/61 tasks complete**
+**Total: 8/61 tasks complete**
