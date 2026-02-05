@@ -266,10 +266,9 @@ engine.run()  # Runs forever
 
 *Claude: After any correction, add a rule here. Be specific. Keep iterating until mistake rate drops.*
 
-<!-- 
+- Always use timezone-aware datetimes (`timezone.utc`) — Parquet strips timezone info, so re-add it when reading back.
+- Don't use `== 0.0` for float sentinel checks — use `None` sentinel instead to avoid ambiguity with legitimate zero values.
+
+<!--
 Format: "Don't X — do Y instead" or "Always X before Y"
-Examples:
-- Don't use `datetime.now()` — use `datetime.utcnow()` for consistency
-- Always check `portfolio.has_position()` before opening new positions
-- Parquet files must be closed before reading again
 -->

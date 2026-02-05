@@ -1,6 +1,6 @@
 # Runtime data
-data/
-output/
+/data/
+/output/
 
 # Environment
 .env
