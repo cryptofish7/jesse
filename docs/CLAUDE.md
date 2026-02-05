@@ -19,6 +19,8 @@ This file provides context for Claude Code sessions working on this project.
 ### During Development
 
 - Update the task tracker when tasks are completed or discovered.
+- **Before implementing a task:** Spawn a subagent to write a thorough implementation plan. The plan should analyze the relevant code, identify all files that need changes, outline the approach, and flag any risks or open questions. Present the plan for approval before writing any code.
+- **After the plan is approved:** Spawn a subagent to implement the approved plan. The implementation subagent receives the full plan as context and executes it.
 - When stuck or going in circles, stop. Re-plan before continuing.
 - **On any error:** Spawn the `debugger` subagent with the error context. Use its analysis to fix the issue before continuing.
 
