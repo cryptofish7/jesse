@@ -9,32 +9,32 @@ Track progress by marking tasks as complete: `- [x]`
 
 **Goal:** Establish project foundation with proper structure, dependencies, and configuration.
 
-- [ ] Initialize project structure
-  - [ ] Create directory structure (`src/`, `strategies/`, `data/`, `output/`, `tests/`, `docs/`)
-  - [ ] Create `__init__.py` files for all packages
-  - [ ] Create `.gitignore` (ignore `data/`, `output/`, `.env`, `__pycache__/`, `.venv/`)
+- [x] Initialize project structure
+  - [x] Create directory structure (`src/`, `strategies/`, `data/`, `output/`, `tests/`, `docs/`)
+  - [x] Create `__init__.py` files for all packages
+  - [x] Create `.gitignore` (ignore `data/`, `output/`, `.env`, `__pycache__/`, `.venv/`)
 
-- [ ] Set up dependencies
-  - [ ] Create `pyproject.toml` with all dependencies
-  - [ ] Create `requirements.txt` for Railway deployment
-  - [ ] Set up virtual environment
-  - [ ] Verify all packages install correctly
+- [x] Set up dependencies
+  - [x] Create `pyproject.toml` with all dependencies
+  - [x] Create `requirements.txt` for Railway deployment
+  - [x] Set up virtual environment
+  - [x] Verify all packages install correctly
 
-- [ ] Set up configuration
-  - [ ] Create `src/config.py` with Pydantic settings
-  - [ ] Create `.env.example` template
-  - [ ] Support environment variable overrides
-  - [ ] Add configuration validation
+- [x] Set up configuration
+  - [x] Create `src/config.py` with Pydantic settings
+  - [x] Create `.env.example` template
+  - [x] Support environment variable overrides
+  - [x] Add configuration validation
 
-- [ ] Set up logging
-  - [ ] Configure structured logging
-  - [ ] Add log levels (DEBUG, INFO, WARNING, ERROR)
-  - [ ] Add file and console handlers
+- [x] Set up logging
+  - [x] Configure structured logging
+  - [x] Add log levels (DEBUG, INFO, WARNING, ERROR)
+  - [x] Add file and console handlers
 
-- [ ] Create entry point
-  - [ ] Create `main.py` with CLI argument parsing
-  - [ ] Add `backtest` command placeholder
-  - [ ] Add `forward-test` command placeholder
+- [x] Create entry point
+  - [x] Create `main.py` with CLI argument parsing
+  - [x] Add `backtest` command placeholder
+  - [x] Add `forward-test` command placeholder
 
 ---
 
@@ -549,7 +549,7 @@ See `PRD.md` Section 6 for the full list of post-v1 enhancements.
 
 | Milestone | Status | Tasks |
 |-----------|--------|-------|
-| 1. Project Setup | Not Started | 0/5 |
+| 1. Project Setup | Complete | 5/5 |
 | 2. Core Types | Not Started | 0/3 |
 | 3. Data Layer — Historical | Not Started | 0/5 |
 | 4. Strategy Interface | Not Started | 0/4 |
@@ -566,4 +566,4 @@ See `PRD.md` Section 6 for the full list of post-v1 enhancements.
 | 15. Documentation & Polish | Not Started | 0/5 |
 | 16. Future Enhancements | Backlog | — |
 
-**Total: 0/61 tasks complete**
+**Total: 5/61 tasks complete**
