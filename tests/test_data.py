@@ -97,7 +97,10 @@ class TestOrderflow:
         candles = [
             Candle(
                 timestamp=datetime(2024, 1, 1, tzinfo=UTC),
-                open=100.0, high=110.0, low=90.0, close=105.0,
+                open=100.0,
+                high=110.0,
+                low=90.0,
+                close=105.0,
                 volume=100.0,
             ),
         ]
@@ -110,7 +113,10 @@ class TestOrderflow:
         candles = [
             Candle(
                 timestamp=datetime(2024, 1, 1, tzinfo=UTC),
-                open=105.0, high=110.0, low=90.0, close=100.0,
+                open=105.0,
+                high=110.0,
+                low=90.0,
+                close=100.0,
                 volume=100.0,
             ),
         ]
@@ -121,7 +127,10 @@ class TestOrderflow:
         candles = [
             Candle(
                 timestamp=datetime(2024, 1, 1, tzinfo=UTC),
-                open=100.0, high=110.0, low=90.0, close=100.0,
+                open=100.0,
+                high=110.0,
+                low=90.0,
+                close=100.0,
                 volume=100.0,
             ),
         ]
@@ -132,11 +141,19 @@ class TestOrderflow:
         candles = [
             Candle(
                 timestamp=datetime(2024, 1, 1, 0, tzinfo=UTC),
-                open=100.0, high=110.0, low=90.0, close=105.0, volume=100.0,
+                open=100.0,
+                high=110.0,
+                low=90.0,
+                close=105.0,
+                volume=100.0,
             ),
             Candle(
                 timestamp=datetime(2024, 1, 1, 1, tzinfo=UTC),
-                open=105.0, high=110.0, low=90.0, close=103.0, volume=50.0,
+                open=105.0,
+                high=110.0,
+                low=90.0,
+                close=103.0,
+                volume=50.0,
             ),
         ]
         result = orderflow.approximate_cvd(candles)
@@ -148,8 +165,12 @@ class TestOrderflow:
         candles = [
             Candle(
                 timestamp=datetime(2024, 1, 1, tzinfo=UTC),
-                open=100.0, high=110.0, low=90.0, close=105.0,
-                volume=100.0, cvd=42.0,
+                open=100.0,
+                high=110.0,
+                low=90.0,
+                close=105.0,
+                volume=100.0,
+                cvd=42.0,
             ),
         ]
         result = orderflow.approximate_cvd(candles)
@@ -159,7 +180,10 @@ class TestOrderflow:
         candles = [
             Candle(
                 timestamp=datetime(2024, 1, 1, tzinfo=UTC),
-                open=100.0, high=110.0, low=90.0, close=105.0,
+                open=100.0,
+                high=110.0,
+                low=90.0,
+                close=105.0,
                 volume=100.0,
             ),
         ]
@@ -172,8 +196,12 @@ class TestOrderflow:
         candles = [
             Candle(
                 timestamp=datetime(2024, 1, 1, tzinfo=UTC),
-                open=100.0, high=110.0, low=90.0, close=105.0,
-                volume=100.0, open_interest=0.0,
+                open=100.0,
+                high=110.0,
+                low=90.0,
+                close=105.0,
+                volume=100.0,
+                open_interest=0.0,
             ),
         ]
         result = orderflow.enrich_with_oi(candles, {})
@@ -211,7 +239,11 @@ class TestHistoricalDataProvider:
         mock_ohlcv = [
             [
                 int(datetime(2024, 1, 1, i, tzinfo=UTC).timestamp() * 1000),
-                100.0, 110.0, 90.0, 105.0, 1000.0,
+                100.0,
+                110.0,
+                90.0,
+                105.0,
+                1000.0,
             ]
             for i in range(3)
         ]

@@ -36,16 +36,18 @@ def approximate_cvd(candles: list[Candle]) -> list[Candle]:
             sign = 0.0
 
         cumulative += c.volume * sign
-        result.append(Candle(
-            timestamp=c.timestamp,
-            open=c.open,
-            high=c.high,
-            low=c.low,
-            close=c.close,
-            volume=c.volume,
-            open_interest=c.open_interest,
-            cvd=cumulative,
-        ))
+        result.append(
+            Candle(
+                timestamp=c.timestamp,
+                open=c.open,
+                high=c.high,
+                low=c.low,
+                close=c.close,
+                volume=c.volume,
+                open_interest=c.open_interest,
+                cvd=cumulative,
+            )
+        )
 
     return result
 
@@ -67,16 +69,18 @@ def enrich_with_oi(
         ts_ms = int(c.timestamp.timestamp() * 1000)
         oi = oi_data.get(ts_ms, c.open_interest)
         if oi != c.open_interest:
-            result.append(Candle(
-                timestamp=c.timestamp,
-                open=c.open,
-                high=c.high,
-                low=c.low,
-                close=c.close,
-                volume=c.volume,
-                open_interest=oi,
-                cvd=c.cvd,
-            ))
+            result.append(
+                Candle(
+                    timestamp=c.timestamp,
+                    open=c.open,
+                    high=c.high,
+                    low=c.low,
+                    close=c.close,
+                    volume=c.volume,
+                    open_interest=oi,
+                    cvd=c.cvd,
+                )
+            )
         else:
             result.append(c)
     return result

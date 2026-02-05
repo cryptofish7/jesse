@@ -38,10 +38,7 @@ def _create_exchange() -> ccxt.Exchange:
 
 def _filter_range(candles: list[Candle], start_ms: int, end_ms: int) -> list[Candle]:
     """Filter candles to those within the given timestamp range (inclusive)."""
-    return [
-        c for c in candles
-        if start_ms <= int(c.timestamp.timestamp() * 1000) <= end_ms
-    ]
+    return [c for c in candles if start_ms <= int(c.timestamp.timestamp() * 1000) <= end_ms]
 
 
 def _timeframe_ms(tf: str) -> int:
@@ -164,14 +161,16 @@ class HistoricalDataProvider(DataProvider):
                 ts = datetime.fromtimestamp(row[0] / 1000, tz=UTC)
                 if int(ts.timestamp() * 1000) > end_ms:
                     break
-                all_candles.append(Candle(
-                    timestamp=ts,
-                    open=float(row[1]),
-                    high=float(row[2]),
-                    low=float(row[3]),
-                    close=float(row[4]),
-                    volume=float(row[5]),
-                ))
+                all_candles.append(
+                    Candle(
+                        timestamp=ts,
+                        open=float(row[1]),
+                        high=float(row[2]),
+                        low=float(row[3]),
+                        close=float(row[4]),
+                        volume=float(row[5]),
+                    )
+                )
 
             last_ts = ohlcv[-1][0]
             since = last_ts + tf_ms

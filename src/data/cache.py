@@ -14,16 +14,18 @@ from src.core.types import Candle
 
 logger = logging.getLogger(__name__)
 
-SCHEMA = pa.schema([
-    ("timestamp", pa.timestamp("us")),
-    ("open", pa.float64()),
-    ("high", pa.float64()),
-    ("low", pa.float64()),
-    ("close", pa.float64()),
-    ("volume", pa.float64()),
-    ("open_interest", pa.float64()),
-    ("cvd", pa.float64()),
-])
+SCHEMA = pa.schema(
+    [
+        ("timestamp", pa.timestamp("us")),
+        ("open", pa.float64()),
+        ("high", pa.float64()),
+        ("low", pa.float64()),
+        ("close", pa.float64()),
+        ("volume", pa.float64()),
+        ("open_interest", pa.float64()),
+        ("cvd", pa.float64()),
+    ]
+)
 
 
 def cache_path(symbol: str, timeframe: str) -> Path:
@@ -49,16 +51,18 @@ def read_candles(symbol: str, timeframe: str) -> list[Candle]:
         ts = table.column("timestamp")[i].as_py()
         if ts.tzinfo is None:
             ts = ts.replace(tzinfo=UTC)
-        candles.append(Candle(
-            timestamp=ts,
-            open=table.column("open")[i].as_py(),
-            high=table.column("high")[i].as_py(),
-            low=table.column("low")[i].as_py(),
-            close=table.column("close")[i].as_py(),
-            volume=table.column("volume")[i].as_py(),
-            open_interest=table.column("open_interest")[i].as_py(),
-            cvd=table.column("cvd")[i].as_py(),
-        ))
+        candles.append(
+            Candle(
+                timestamp=ts,
+                open=table.column("open")[i].as_py(),
+                high=table.column("high")[i].as_py(),
+                low=table.column("low")[i].as_py(),
+                close=table.column("close")[i].as_py(),
+                volume=table.column("volume")[i].as_py(),
+                open_interest=table.column("open_interest")[i].as_py(),
+                cvd=table.column("cvd")[i].as_py(),
+            )
+        )
     logger.debug("Read %d candles from %s", len(candles), path)
     return candles
 
