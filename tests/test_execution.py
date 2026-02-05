@@ -303,21 +303,36 @@ class TestPnLCalculation:
         assert trade.size_usd == 100.0
 
 
-# --- TestInvalidSignalDirection ---
+# --- TestEdgeCases ---
 
 
-class TestInvalidSignalDirection:
-    """Test that unknown signal directions are safely ignored."""
+class TestEdgeCases:
+    """Edge case tests for executor."""
 
     def setup_method(self) -> None:
         self.executor = BacktestExecutor()
         self.executor.current_time = datetime(2024, 6, 1, tzinfo=UTC)
 
     @pytest.mark.asyncio
-    async def test_unknown_direction_returns_none(self) -> None:
-        """execute() returns None for unrecognized signal directions."""
+    async def test_close_signal_empty_portfolio_returns_none(self) -> None:
+        """Close signal with no open positions returns None."""
         portfolio = _portfolio()
-        # Signal type only allows "long", "short", "close" but we test graceful handling
-        signal = Signal(direction="close")  # valid direction but no positions
+        signal = Signal(direction="close")
         result = await self.executor.execute(signal, 100.0, portfolio)
+        assert result is None
+
+    @pytest.mark.asyncio
+    async def test_reject_zero_price(self) -> None:
+        """Opening at price=0 is rejected to avoid ZeroDivisionError."""
+        portfolio = _portfolio()
+        signal = Signal.open_long(size_percent=0.1, stop_loss=90.0, take_profit=110.0)
+        result = await self.executor.execute(signal, 0.0, portfolio)
+        assert result is None
+
+    @pytest.mark.asyncio
+    async def test_reject_negative_price(self) -> None:
+        """Opening at negative price is rejected."""
+        portfolio = _portfolio()
+        signal = Signal.open_long(size_percent=0.1, stop_loss=90.0, take_profit=110.0)
+        result = await self.executor.execute(signal, -50.0, portfolio)
         assert result is None

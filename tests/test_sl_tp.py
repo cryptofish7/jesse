@@ -232,3 +232,16 @@ class TestSLTPResolve:
             pos, candle, available_candles=available, current_timeframe="4h"
         )
         assert result == "take_profit"
+
+    def test_check_at_1m_both_hit_with_available_candles(self) -> None:
+        """check() at 1m with both hit and available_candles falls back to SL."""
+        pos = _make_position(side="long", stop_loss=95.0, take_profit=108.0)
+        candle = _make_candle(low=94.0, high=109.0)  # Both hit
+
+        # Even with available_candles, at 1m there's nowhere to drill
+        available: dict[str, list] = {}
+
+        result = self.monitor.check(
+            pos, candle, available_candles=available, current_timeframe="1m"
+        )
+        assert result == "stop_loss"

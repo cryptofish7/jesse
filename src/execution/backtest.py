@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Literal
 
 from src.core.portfolio import Portfolio
@@ -12,9 +12,19 @@ from src.execution.executor import Executor
 
 logger = logging.getLogger(__name__)
 
+# Sentinel for unset current_time — uses min datetime with UTC to comply
+# with project convention of timezone-aware datetimes.
+_UNSET_TIME = datetime.min.replace(tzinfo=UTC)
+
 
 class BacktestExecutor(Executor):
     """Fills trades at candle close price for backtesting.
+
+    The executor returns Position/Trade objects but does NOT mutate the
+    portfolio. The Engine is responsible for calling portfolio.open_position()
+    and portfolio.close_position() after receiving non-None results. This
+    separation allows the Engine to coordinate portfolio updates with
+    persistence, alerts, and other side effects.
 
     The engine must set `current_time` before each execute/close cycle
     so that Position.entry_time and Trade.exit_time reflect the actual
@@ -23,7 +33,7 @@ class BacktestExecutor(Executor):
 
     def __init__(self, initial_balance: float = 10_000.0) -> None:
         self.initial_balance = initial_balance
-        self.current_time: datetime = datetime.min
+        self.current_time: datetime = _UNSET_TIME
 
     async def execute(
         self,
@@ -31,7 +41,12 @@ class BacktestExecutor(Executor):
         current_price: float,
         portfolio: Portfolio,
     ) -> Position | Trade | None:
-        """Execute a signal at the current (candle close) price."""
+        """Execute a signal at the current (candle close) price.
+
+        Returns a Position for open signals, Trade for close signals,
+        or None if rejected. The caller (Engine) must update the portfolio
+        with the returned object.
+        """
         if signal.direction in ("long", "short"):
             return self._open_position(signal, current_price, portfolio)
         elif signal.direction == "close":
@@ -69,6 +84,10 @@ class BacktestExecutor(Executor):
                 size_usd,
                 portfolio.balance,
             )
+            return None
+
+        if price <= 0:
+            logger.warning("Rejecting open signal: invalid price %.6f", price)
             return None
 
         size = size_usd / price  # Base currency units (e.g., BTC)
@@ -123,7 +142,7 @@ def _build_trade(
     else:
         pnl = (position.entry_price - exit_price) * position.size
 
-    pnl_percent = (pnl / position.size_usd) * 100 if position.size_usd != 0 else 0.0
+    pnl_percent = (pnl / position.size_usd) * 100 if position.size_usd > 0 else 0.0
 
     return Trade(
         id=position.id,

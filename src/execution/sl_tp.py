@@ -57,7 +57,7 @@ class SLTPMonitor:
         position: Position,
         candle: Candle,
         available_candles: dict[str, list[Candle]],
-        current_timeframe: str = "4h",
+        current_timeframe: str,
     ) -> ExitReason:
         """Resolve which exit hit first when both SL and TP are hit on one candle.
 
@@ -67,9 +67,11 @@ class SLTPMonitor:
         Args:
             position: The position to check.
             candle: The candle where both SL and TP were hit.
-            available_candles: Dict mapping timeframe -> list of candles within
-                the parent candle's time window.
-            current_timeframe: The timeframe of the current candle.
+            available_candles: Dict mapping timeframe -> list of sub-candles.
+                Each timeframe's candles must be pre-filtered to the parent
+                candle's time window by the caller (Engine). The monitor does
+                not filter by timestamp — it trusts the provided data.
+            current_timeframe: The timeframe of the current candle (required).
         """
         result = self._resolve_recursive(position, candle, available_candles, current_timeframe)
         # _resolve_recursive returns None only for sub-candles where neither is hit,
