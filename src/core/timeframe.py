@@ -47,11 +47,8 @@ def is_timeframe_complete(tf: str, timestamp: datetime) -> bool:
     """
     minutes = get_timeframe_minutes(tf)
     if tf == "1w":
-        # Weekly: completes at Monday 00:00 UTC
-        # A 1m candle at Sunday 23:59 closes the weekly candle
-        # Check: is the next minute a Monday 00:00?
-        total_minutes = int(timestamp.timestamp()) // 60
-        return (total_minutes + 1) % minutes == 0 or _is_week_boundary(timestamp)
+        # Weekly: completes when Sunday 23:59 UTC closes (Monday 00:00 boundary)
+        return _is_week_boundary(timestamp)
     if tf == "1d":
         # Daily: completes at 00:00 UTC
         return timestamp.hour == 23 and timestamp.minute == 59

@@ -13,7 +13,7 @@ from src.core.timeframe import (
     get_timeframe_minutes,
     is_timeframe_complete,
 )
-from src.core.types import Candle, MultiTimeframeData, Signal
+from src.core.types import Candle, MultiTimeframeData, Signal, TimeframeData
 from src.strategy.base import Strategy
 from src.strategy.examples.ma_crossover import MACrossover, _sma
 
@@ -119,6 +119,17 @@ class TestIsTimeframeComplete:
         # Daily completes at 23:59
         assert is_timeframe_complete("1d", datetime(2024, 1, 1, 23, 59, tzinfo=UTC))
         assert not is_timeframe_complete("1d", datetime(2024, 1, 1, 22, 59, tzinfo=UTC))
+
+    def test_1w_boundaries(self) -> None:
+        # Weekly: completes at Sunday 23:59 UTC (Monday 00:00 boundary)
+        # 2024-01-07 is a Sunday
+        assert is_timeframe_complete("1w", datetime(2024, 1, 7, 23, 59, tzinfo=UTC))
+        # Saturday 23:59 should NOT complete
+        assert not is_timeframe_complete("1w", datetime(2024, 1, 6, 23, 59, tzinfo=UTC))
+        # Wednesday 23:59 should NOT complete (was a bug — epoch alignment)
+        assert not is_timeframe_complete("1w", datetime(2024, 1, 3, 23, 59, tzinfo=UTC))
+        # Another Sunday
+        assert is_timeframe_complete("1w", datetime(2024, 1, 14, 23, 59, tzinfo=UTC))
 
     def test_1m_always_complete(self) -> None:
         # Every minute is a complete 1m candle
@@ -306,13 +317,8 @@ class TestMACrossover:
 
         # Only 2 candles — not enough for slow_period=5
         history = [_candle(i) for i in range(2)]
-        mtf = MultiTimeframeData(
-            {"1m": _candle(2).__class__}  # placeholder, replaced below
-        )
-        mtf["1m"] = __import__("src.core.types", fromlist=["TimeframeData"]).TimeframeData(
-            latest=_candle(2),
-            history=history,
-        )
+        mtf = MultiTimeframeData()
+        mtf["1m"] = TimeframeData(latest=_candle(2), history=history)
         signals = s.on_candle(mtf, portfolio)
         assert signals == []
 
@@ -350,8 +356,6 @@ class TestMACrossover:
                     )
                 )
 
-            from src.core.types import TimeframeData
-
             mtf = MultiTimeframeData()
             mtf["1m"] = TimeframeData(latest=candle, history=history_candles)
 
@@ -363,6 +367,50 @@ class TestMACrossover:
         assert len(long_signals) > 0
         assert long_signals[0].stop_loss is not None
         assert long_signals[0].take_profit is not None
+
+    def test_crossover_generates_short_signal(self) -> None:
+        s = MACrossover(fast_period=3, slow_period=5, sl_percent=2.0, tp_percent=4.0)
+        portfolio = Portfolio(initial_balance=10000)
+
+        base = datetime(2024, 1, 1, 0, 0, tzinfo=UTC)
+
+        # Prices: ascend then sharp drop — fast MA crosses below slow MA
+        prices = [90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 95, 90, 80]
+
+        signals: list[Signal] = []
+        for i, price in enumerate(prices):
+            candle = _candle_at(
+                base + timedelta(minutes=i),
+                open_=price,
+                high=price + 1,
+                low=price - 1,
+                close=price,
+                volume=1.0,
+            )
+            history_candles = [
+                _candle_at(
+                    base + timedelta(minutes=j),
+                    open_=prices[j],
+                    high=prices[j] + 1,
+                    low=prices[j] - 1,
+                    close=prices[j],
+                    volume=1.0,
+                )
+                for j in range(i)
+            ]
+
+            mtf = MultiTimeframeData()
+            mtf["1m"] = TimeframeData(latest=candle, history=history_candles)
+
+            result = s.on_candle(mtf, portfolio)
+            signals.extend(result)
+
+        short_signals = [s for s in signals if s.direction == "short"]
+        assert len(short_signals) > 0
+        assert short_signals[0].stop_loss is not None
+        assert short_signals[0].take_profit is not None
+        # Short SL should be above entry, TP below
+        assert short_signals[0].stop_loss > short_signals[0].take_profit
 
     def test_state_roundtrip(self) -> None:
         s = MACrossover()
