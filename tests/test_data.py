@@ -311,3 +311,13 @@ class TestCreateExchange:
 
         with pytest.raises(ValueError, match="API credentials required"):
             _create_exchange()
+
+    def test_raises_on_partial_credentials(self, monkeypatch):
+        monkeypatch.setattr("src.data.historical.settings.exchange", "binance")
+        monkeypatch.setattr("src.data.historical.settings.api_key", "test-key")
+        monkeypatch.setattr("src.data.historical.settings.api_secret", "")
+
+        from src.data.historical import _create_exchange
+
+        with pytest.raises(ValueError, match="Partial credentials: API_SECRET is missing"):
+            _create_exchange()

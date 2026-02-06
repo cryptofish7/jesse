@@ -35,9 +35,14 @@ def _create_exchange() -> ccxt.Exchange:
         raise ValueError(f"Unsupported exchange: {settings.exchange}")
 
     config: dict[str, object] = {"enableRateLimit": True}
-    if settings.api_key and settings.api_secret:
+    has_key = bool(settings.api_key)
+    has_secret = bool(settings.api_secret)
+    if has_key and has_secret:
         config["apiKey"] = settings.api_key
         config["secret"] = settings.api_secret
+    elif has_key or has_secret:
+        missing = "API_SECRET" if has_key else "API_KEY"
+        raise ValueError(f"Partial credentials: {missing} is missing")
     else:
         raise ValueError(
             "API credentials required: set API_KEY and API_SECRET environment variables"
