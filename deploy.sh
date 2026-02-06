@@ -84,6 +84,8 @@ from src.analysis.metrics import (
     calculate_sharpe_ratio,
 )
 from src.analysis.charts import plot_equity_curve, plot_trades
+from src.persistence.database import Database
+from src.persistence.models import SCHEMA_VERSION, ALL_TABLES
 "
     echo "  PASS: All key modules import cleanly"
 }

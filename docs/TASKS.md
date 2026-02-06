@@ -284,41 +284,41 @@ Track progress by marking tasks as complete: `- [x]`
 
 **Goal:** Save and restore state for crash recovery.
 
-- [ ] Create `src/persistence/models.py`
-  - [ ] Define SQLite schema
-    - [ ] `positions` table
-    - [ ] `trades` table
-    - [ ] `portfolio` table
-    - [ ] `strategy_state` table
+- [x] Create `src/persistence/models.py`
+  - [x] Define SQLite schema
+    - [x] `positions` table
+    - [x] `trades` table
+    - [x] `portfolio` table
+    - [x] `strategy_state` table
 
-- [ ] Create `src/persistence/database.py`
-  - [ ] Implement `Database` class
-    - [ ] Method: `initialize()` — create tables if not exist
-    - [ ] Method: `save_position(position)`
-    - [ ] Method: `delete_position(position_id)`
-    - [ ] Method: `get_open_positions() -> list[Position]`
-    - [ ] Method: `save_trade(trade)`
-    - [ ] Method: `get_trades() -> list[Trade]`
-    - [ ] Method: `save_portfolio(portfolio)`
-    - [ ] Method: `get_portfolio() -> Portfolio | None`
-    - [ ] Method: `save_strategy_state(name, state_dict)`
-    - [ ] Method: `get_strategy_state(name) -> dict | None`
-  - [ ] Use aiosqlite for async operations
-  - [ ] Implement transaction support
+- [x] Create `src/persistence/database.py`
+  - [x] Implement `Database` class
+    - [x] Method: `initialize()` — create tables if not exist
+    - [x] Method: `save_position(position)`
+    - [x] Method: `delete_position(position_id)`
+    - [x] Method: `get_open_positions() -> list[Position]`
+    - [x] Method: `save_trade(trade)`
+    - [x] Method: `get_trades() -> list[Trade]`
+    - [x] Method: `save_portfolio(portfolio)`
+    - [x] Method: `get_portfolio() -> Portfolio | None`
+    - [x] Method: `save_strategy_state(name, state_dict)`
+    - [x] Method: `get_strategy_state(name) -> dict | None`
+  - [x] Use aiosqlite for async operations
+  - [x] Implement transaction support
 
-- [ ] Integrate persistence with Engine
-  - [ ] On startup: restore positions, portfolio, strategy state
-  - [ ] On position open: save position
-  - [ ] On position close: delete position, save trade
-  - [ ] Periodic: save portfolio state
-  - [ ] On shutdown: save all state
+- [x] Integrate persistence with Engine
+  - [x] On startup: restore positions, portfolio, strategy state
+  - [x] On position open: save position
+  - [x] On position close: delete position, save trade
+  - [x] Periodic: save portfolio state
+  - [x] On shutdown: save all state
 
-- [ ] Write unit tests
-  - [ ] Test position save/load roundtrip
-  - [ ] Test trade save/load roundtrip
-  - [ ] Test portfolio save/load roundtrip
-  - [ ] Test strategy state save/load roundtrip
-  - [ ] Test recovery after simulated crash
+- [x] Write unit tests
+  - [x] Test position save/load roundtrip
+  - [x] Test trade save/load roundtrip
+  - [x] Test portfolio save/load roundtrip
+  - [x] Test strategy state save/load roundtrip
+  - [x] Test recovery after simulated crash
 
 ---
 
@@ -575,7 +575,7 @@ See `PRD.md` Section 6 for the full list of post-v1 enhancements.
 | 5. Backtest Executor | Complete | 4/4 |
 | 6. Backtest Engine | Complete | 4/4 |
 | 7. Analysis & Visualization | Complete | 4/4 |
-| 8. Persistence Layer | Not Started | 0/4 |
+| 8. Persistence Layer | Complete | 4/4 |
 | 9. Live Data Provider | Not Started | 0/4 |
 | 10. Paper Executor | Not Started | 0/3 |
 | 11. Discord Alerts | Not Started | 0/3 |
@@ -585,4 +585,4 @@ See `PRD.md` Section 6 for the full list of post-v1 enhancements.
 | 15. Documentation & Polish | Not Started | 0/5 |
 | 16. Future Enhancements | Backlog | — |
 
-**Total: 30/61 tasks complete**
+**Total: 34/61 tasks complete**

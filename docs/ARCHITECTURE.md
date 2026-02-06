@@ -457,7 +457,7 @@ class DiscordAlerter:
 
 ```sql
 -- Positions table (open positions)
-CREATE TABLE positions (
+CREATE TABLE IF NOT EXISTS positions (
     id TEXT PRIMARY KEY,
     side TEXT NOT NULL,  -- 'long' or 'short'
     entry_price REAL NOT NULL,
@@ -466,11 +466,11 @@ CREATE TABLE positions (
     size_usd REAL NOT NULL,
     stop_loss REAL NOT NULL,
     take_profit REAL NOT NULL,
-    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    created_at TEXT NOT NULL
 );
 
 -- Trades table (closed positions)
-CREATE TABLE trades (
+CREATE TABLE IF NOT EXISTS trades (
     id TEXT PRIMARY KEY,
     side TEXT NOT NULL,
     entry_price REAL NOT NULL,
@@ -482,23 +482,22 @@ CREATE TABLE trades (
     pnl REAL NOT NULL,
     pnl_percent REAL NOT NULL,
     exit_reason TEXT NOT NULL,  -- 'stop_loss', 'take_profit', 'signal'
-    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    created_at TEXT NOT NULL
 );
 
 -- Portfolio state
-CREATE TABLE portfolio (
+CREATE TABLE IF NOT EXISTS portfolio (
     id INTEGER PRIMARY KEY CHECK (id = 1),  -- Singleton
     initial_balance REAL NOT NULL,
     balance REAL NOT NULL,
-    updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    updated_at TEXT NOT NULL
 );
 
 -- Strategy state (for crash recovery)
-CREATE TABLE strategy_state (
-    id INTEGER PRIMARY KEY CHECK (id = 1),  -- Singleton
-    strategy_name TEXT NOT NULL,
-    state_json TEXT,  -- Serialized strategy state
-    updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+CREATE TABLE IF NOT EXISTS strategy_state (
+    strategy_name TEXT PRIMARY KEY,
+    state_json TEXT NOT NULL,  -- Serialized strategy state
+    updated_at TEXT NOT NULL
 );
 ```
 
@@ -829,7 +828,7 @@ jesse/
 │   ├── persistence/
 │   │   ├── __init__.py
 │   │   ├── database.py        # SQLite operations
-│   │   └── models.py          # SQLAlchemy or raw SQL models
+│   │   └── models.py          # Raw SQL schema definitions
 │   │
 │   └── config.py              # Pydantic settings
 │

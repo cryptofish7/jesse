@@ -206,6 +206,13 @@ class Engine:
         self.portfolio = Portfolio(initial_balance=initial_balance)
         self._sl_tp_monitor = SLTPMonitor()
 
+        # Persistence
+        self._db: object | None = None
+        if self.persist:
+            from src.persistence.database import Database
+
+            self._db = Database()
+
     async def run(self) -> BacktestResults | None:
         """Main entry point. Returns BacktestResults for backtest, None for forward test."""
         if isinstance(self.executor, BacktestExecutor):
@@ -228,6 +235,13 @@ class Engine:
             raise ValueError("start and end must be set for backtest mode")
 
         logger.info("Starting backtest: %s from %s to %s", symbol, self.start, self.end)
+
+        if self._db is not None:
+            from src.persistence.database import Database
+
+            db: Database = self._db  # type: ignore[assignment]
+            await db.initialize()
+            await self._restore_state()
 
         candles_1m = await self.data_provider.get_historical_candles(
             symbol=symbol, timeframe="1m", start=self.start, end=self.end
@@ -298,6 +312,8 @@ class Engine:
         last_candle = backtest_candles[-1]
         await self._close_all_positions(last_candle.close, last_candle.timestamp)
 
+        await self._save_state()
+
         results = BacktestResults(
             trades=list(self.portfolio.trades),
             equity_curve=equity_curve,
@@ -310,6 +326,52 @@ class Engine:
         logger.info("Backtest complete.\n%s", results.summary())
         return results
 
+    async def _restore_state(self) -> None:
+        """Restore portfolio and strategy state from the database.
+
+        Called at the start of a backtest/forward-test when persist=True.
+        """
+        if self._db is None:
+            return
+
+        from src.persistence.database import Database
+
+        db: Database = self._db  # type: ignore[assignment]
+
+        saved_portfolio = await db.get_portfolio()
+        if saved_portfolio is not None:
+            self.portfolio.balance = saved_portfolio.balance
+            logger.info("Restored portfolio balance: %.2f", saved_portfolio.balance)
+
+        positions = await db.get_open_positions()
+        for pos in positions:
+            self.portfolio.positions.append(pos)
+        if positions:
+            logger.info("Restored %d open positions", len(positions))
+
+        strategy_name = type(self.strategy).__name__
+        state = await db.get_strategy_state(strategy_name)
+        if state is not None:
+            self.strategy.set_state(state)
+            logger.info("Restored strategy state for %s", strategy_name)
+
+    async def _save_state(self) -> None:
+        """Persist portfolio and strategy state to the database.
+
+        Called at the end of the backtest loop when persist=True.
+        """
+        if self._db is None:
+            return
+
+        from src.persistence.database import Database
+
+        db: Database = self._db  # type: ignore[assignment]
+
+        await db.save_portfolio(self.portfolio)
+        strategy_name = type(self.strategy).__name__
+        await db.save_strategy_state(strategy_name, self.strategy.get_state())
+        logger.info("Saved portfolio and strategy state")
+
     async def _check_sl_tp(self, candle: Candle) -> None:
         """Check all open positions for SL/TP hits and close if triggered."""
         for position in list(self.portfolio.positions):
@@ -318,6 +380,12 @@ class Engine:
                 exit_price = self._get_exit_price(position, result)
                 trade = await self.executor.close_position(position, exit_price, result)
                 self.portfolio.close_position(position.id, trade)
+                if self._db is not None:
+                    from src.persistence.database import Database
+
+                    db: Database = self._db  # type: ignore[assignment]
+                    await db.delete_position(position.id)
+                    await db.save_trade(trade)
                 logger.debug(
                     "Position %s closed by %s at %.2f (PnL: %.2f)",
                     position.id,
@@ -340,6 +408,11 @@ class Engine:
 
         if isinstance(result, Position):
             self.portfolio.open_position(result)
+            if self._db is not None:
+                from src.persistence.database import Database
+
+                db: Database = self._db  # type: ignore[assignment]
+                await db.save_position(result)
             logger.debug(
                 "Opened %s position %s at %.2f (size: $%.2f)",
                 result.side,
@@ -349,6 +422,12 @@ class Engine:
             )
         elif isinstance(result, Trade):
             self.portfolio.close_position(result.id, result)
+            if self._db is not None:
+                from src.persistence.database import Database
+
+                db_close: Database = self._db  # type: ignore[assignment]
+                await db_close.delete_position(result.id)
+                await db_close.save_trade(result)
             logger.debug(
                 "Closed position %s by signal at %.2f (PnL: %.2f)",
                 result.id,
