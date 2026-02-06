@@ -102,8 +102,8 @@ class MyStrategy(Strategy):
     def on_candle(self, data: MultiTimeframeData, portfolio: Portfolio) -> list[Signal]:
         candle_1m = data['1m'].latest
         candle_4h = data['4h'].latest
-        oi = data['1m'].open_interest
-        cvd = data['1m'].cvd
+        oi = data['1m'].latest.open_interest
+        cvd = data['1m'].latest.cvd
 
         # Strategy logic here...
 
@@ -191,10 +191,10 @@ class Candle:
 @dataclass
 class Signal:
     direction: Literal['long', 'short', 'close']
-    size_percent: float  # % of portfolio
-    stop_loss: float     # Absolute price
-    take_profit: float   # Absolute price
-    position_id: str | None = None  # For closing specific position
+    size_percent: float | None = None  # % of portfolio (for open signals)
+    stop_loss: float | None = None     # Absolute price (for open signals)
+    take_profit: float | None = None   # Absolute price (for open signals)
+    position_id: str | None = None     # For closing specific position
 ```
 
 ### 4.3 Position
@@ -210,7 +210,8 @@ class Position:
     size_usd: float
     stop_loss: float
     take_profit: float
-    unrealized_pnl: float
+
+    def unrealized_pnl(self, current_price: float) -> float: ...
 ```
 
 ### 4.4 Trade (closed position)
@@ -221,10 +222,11 @@ class Trade:
     id: str
     side: Literal['long', 'short']
     entry_price: float
-    entry_time: datetime
     exit_price: float
+    entry_time: datetime
     exit_time: datetime
     size: float
+    size_usd: float
     pnl: float
     pnl_percent: float
     exit_reason: Literal['stop_loss', 'take_profit', 'signal']
@@ -235,11 +237,18 @@ class Trade:
 ```python
 @dataclass
 class Portfolio:
-    balance: float  # Available USDT
-    equity: float   # Balance + unrealized PnL
+    initial_balance: float
+    balance: float | None = None  # Available USDT (defaults to initial_balance)
     positions: list[Position]
 
+    def update_price(self, price: float) -> None: ...
+
+    @property
+    def equity(self) -> float: ...  # Balance + unrealized PnL
+
+    @property
     def has_position(self) -> bool: ...
+
     def get_position(self, id: str) -> Position | None: ...
 ```
 

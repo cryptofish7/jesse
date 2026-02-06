@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import csv
 import logging
 from dataclasses import dataclass
 from datetime import datetime
+from pathlib import Path
 
 from src.core.portfolio import Portfolio
 from src.core.timeframe import TimeframeAggregator, get_timeframe_minutes
@@ -60,42 +62,30 @@ class BacktestResults:
         as wins, so they dilute the win rate. This matches standard
         trading convention.
         """
-        if not self.trades:
-            return 0.0
-        return len(self.winning_trades) / len(self.trades)
+        from src.analysis.metrics import calculate_win_rate
+
+        return calculate_win_rate(self.trades)
 
     @property
     def profit_factor(self) -> float:
         """Gross profit / gross loss. Returns inf if no losses, 0.0 if no wins."""
-        if not self.trades:
-            return 0.0
-        gross_profit = sum(t.pnl for t in self.winning_trades)
-        gross_loss = abs(sum(t.pnl for t in self.losing_trades))
-        if gross_loss == 0.0:
-            return float("inf") if gross_profit > 0 else 0.0
-        return gross_profit / gross_loss
+        from src.analysis.metrics import calculate_profit_factor
+
+        return calculate_profit_factor(self.trades)
 
     @property
     def total_return(self) -> float:
         """Total return as a decimal (e.g., 0.15 = 15%)."""
-        if self.initial_balance == 0:
-            return 0.0
-        return (self.final_equity - self.initial_balance) / self.initial_balance
+        from src.analysis.metrics import calculate_total_return
+
+        return calculate_total_return(self.initial_balance, self.final_equity)
 
     @property
     def max_drawdown(self) -> float:
         """Maximum peak-to-trough drawdown as a decimal (e.g., 0.10 = 10%)."""
-        if not self.equity_curve:
-            return 0.0
-        peak = self.equity_curve[0].equity
-        max_dd = 0.0
-        for point in self.equity_curve:
-            if point.equity > peak:
-                peak = point.equity
-            if peak > 0:
-                dd = (peak - point.equity) / peak
-                max_dd = max(max_dd, dd)
-        return max_dd
+        from src.analysis.metrics import calculate_max_drawdown
+
+        return calculate_max_drawdown(self.equity_curve)
 
     def summary(self) -> str:
         """Human-readable summary of backtest results."""
@@ -115,6 +105,66 @@ class BacktestResults:
             "=" * 50,
         ]
         return "\n".join(lines)
+
+    def plot_equity_curve(self, output_path: str | Path) -> None:
+        """Save an interactive equity curve chart as HTML.
+
+        Delegates to :func:`src.analysis.charts.plot_equity_curve`.
+        """
+        from src.analysis.charts import plot_equity_curve
+
+        plot_equity_curve(self.equity_curve, output_path)
+
+    def plot_trades(self, candles: list[Candle], output_path: str | Path) -> None:
+        """Save an interactive candlestick + trade overlay chart as HTML.
+
+        Delegates to :func:`src.analysis.charts.plot_trades`.
+        """
+        from src.analysis.charts import plot_trades
+
+        plot_trades(candles, self.trades, output_path)
+
+    def export_trades(self, output_path: str | Path) -> None:
+        """Export trades to a CSV file.
+
+        Columns: id, side, entry_price, exit_price, entry_time, exit_time,
+        size, size_usd, pnl, pnl_percent, exit_reason.
+
+        An empty trade list produces a CSV with headers only.
+        """
+        fieldnames = [
+            "id",
+            "side",
+            "entry_price",
+            "exit_price",
+            "entry_time",
+            "exit_time",
+            "size",
+            "size_usd",
+            "pnl",
+            "pnl_percent",
+            "exit_reason",
+        ]
+        Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+        with open(str(output_path), "w", newline="") as f:
+            writer = csv.DictWriter(f, fieldnames=fieldnames)
+            writer.writeheader()
+            for trade in self.trades:
+                writer.writerow(
+                    {
+                        "id": trade.id,
+                        "side": trade.side,
+                        "entry_price": trade.entry_price,
+                        "exit_price": trade.exit_price,
+                        "entry_time": trade.entry_time.isoformat(),
+                        "exit_time": trade.exit_time.isoformat(),
+                        "size": trade.size,
+                        "size_usd": trade.size_usd,
+                        "pnl": trade.pnl,
+                        "pnl_percent": trade.pnl_percent,
+                        "exit_reason": trade.exit_reason,
+                    }
+                )
 
 
 # --- Engine ---
