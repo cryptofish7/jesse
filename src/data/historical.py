@@ -33,7 +33,16 @@ def _create_exchange() -> ccxt.Exchange:
     cls = exchange_map.get(settings.exchange)
     if cls is None:
         raise ValueError(f"Unsupported exchange: {settings.exchange}")
-    return cls({"enableRateLimit": True})
+
+    config: dict[str, object] = {"enableRateLimit": True}
+    if settings.api_key and settings.api_secret:
+        config["apiKey"] = settings.api_key
+        config["secret"] = settings.api_secret
+    else:
+        raise ValueError(
+            "API credentials required: set API_KEY and API_SECRET environment variables"
+        )
+    return cls(config)
 
 
 def _filter_range(candles: list[Candle], start_ms: int, end_ms: int) -> list[Candle]:

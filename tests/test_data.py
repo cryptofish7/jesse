@@ -283,3 +283,31 @@ class TestHistoricalDataProvider:
         provider = HistoricalDataProvider()
         with pytest.raises(NotImplementedError):
             await provider.subscribe("BTC/USDT:USDT", ["1m"], AsyncMock())
+
+
+# --- Exchange Creation Tests ---
+
+
+class TestCreateExchange:
+    """Test exchange creation with credentials."""
+
+    def test_creates_exchange_with_credentials(self, monkeypatch):
+        monkeypatch.setattr("src.data.historical.settings.exchange", "binance")
+        monkeypatch.setattr("src.data.historical.settings.api_key", "test-key")
+        monkeypatch.setattr("src.data.historical.settings.api_secret", "test-secret")
+
+        from src.data.historical import _create_exchange
+
+        exchange = _create_exchange()
+        assert exchange.apiKey == "test-key"
+        assert exchange.secret == "test-secret"
+
+    def test_raises_without_credentials(self, monkeypatch):
+        monkeypatch.setattr("src.data.historical.settings.exchange", "binance")
+        monkeypatch.setattr("src.data.historical.settings.api_key", "")
+        monkeypatch.setattr("src.data.historical.settings.api_secret", "")
+
+        from src.data.historical import _create_exchange
+
+        with pytest.raises(ValueError, match="API credentials required"):
+            _create_exchange()

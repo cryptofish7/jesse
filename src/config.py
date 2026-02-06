@@ -22,8 +22,10 @@ class Settings(BaseSettings):
     )
 
     # Exchange settings
-    exchange: Literal["bybit", "binance", "hyperliquid"] = "bybit"
+    exchange: Literal["bybit", "binance", "hyperliquid"] = "binance"
     symbol: str = "BTC/USDT:USDT"
+    api_key: str = ""
+    api_secret: str = ""
     initial_balance: float = 10000.0
 
     # Alerts

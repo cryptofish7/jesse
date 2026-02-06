@@ -12,8 +12,8 @@ class TestSettings:
     """Test Pydantic Settings configuration."""
 
     def test_defaults(self):
-        s = Settings(_env_file=None)
-        assert s.exchange == "bybit"
+        s = Settings(_env_file=None, api_key="", api_secret="")
+        assert s.exchange == "binance"
         assert s.symbol == "BTC/USDT:USDT"
         assert s.initial_balance == 10000.0
         assert s.log_level == "INFO"
@@ -22,6 +22,8 @@ class TestSettings:
         assert s.output_path == "output/"
         assert s.discord_webhook_url is None
         assert s.default_history_candles == 525600
+        assert s.api_key == ""
+        assert s.api_secret == ""
 
     def test_exchange_rejects_invalid(self):
         with pytest.raises(ValueError):
@@ -45,6 +47,13 @@ class TestSettings:
     def test_log_level_rejects_invalid(self):
         with pytest.raises(ValueError):
             Settings(log_level="TRACE", _env_file=None)
+
+    def test_api_credentials_from_env(self, monkeypatch):
+        monkeypatch.setenv("API_KEY", "my-key")
+        monkeypatch.setenv("API_SECRET", "my-secret")
+        s = Settings(_env_file=None)
+        assert s.api_key == "my-key"
+        assert s.api_secret == "my-secret"
 
 
 class TestSetupLogging:
