@@ -271,10 +271,12 @@ class MyStrategy(Strategy):
 ```python
 engine = Engine(
     strategy=MyStrategy(),
-    data_provider=HistoricalDataProvider(symbol="BTC/USDT:USDT", start="2024-01-01", end="2024-12-01"),
-    executor=BacktestExecutor(initial_balance=10000)
+    data_provider=HistoricalDataProvider(symbol="BTC/USDT:USDT"),
+    executor=BacktestExecutor(initial_balance=10000),
+    start=datetime(2024, 1, 1),
+    end=datetime(2024, 12, 1),
 )
-results = engine.run()
+results = await engine.run()
 ```
 
 **Run paper trading:**
