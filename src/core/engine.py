@@ -7,6 +7,7 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from src.core.portfolio import Portfolio
 from src.core.timeframe import TimeframeAggregator, get_timeframe_minutes
@@ -16,6 +17,9 @@ from src.execution.backtest import BacktestExecutor
 from src.execution.executor import Executor
 from src.execution.sl_tp import ExitReason, SLTPMonitor
 from src.strategy.base import Strategy
+
+if TYPE_CHECKING:
+    from src.persistence.database import Database
 
 logger = logging.getLogger(__name__)
 
@@ -206,6 +210,13 @@ class Engine:
         self.portfolio = Portfolio(initial_balance=initial_balance)
         self._sl_tp_monitor = SLTPMonitor()
 
+        # Persistence — lazy runtime import to avoid circular imports
+        self._db: Database | None = None
+        if self.persist:
+            from src.persistence.database import Database as _Database
+
+            self._db = _Database()
+
     async def run(self) -> BacktestResults | None:
         """Main entry point. Returns BacktestResults for backtest, None for forward test."""
         if isinstance(self.executor, BacktestExecutor):
@@ -229,86 +240,138 @@ class Engine:
 
         logger.info("Starting backtest: %s from %s to %s", symbol, self.start, self.end)
 
-        candles_1m = await self.data_provider.get_historical_candles(
-            symbol=symbol, timeframe="1m", start=self.start, end=self.end
-        )
+        if self._db is not None:
+            await self._db.initialize()
 
-        if not candles_1m:
-            logger.warning("No candle data returned for the requested range")
-            return BacktestResults(
-                trades=[],
-                equity_curve=[],
-                start_time=self.start,
-                end_time=self.end,
-                initial_balance=self.portfolio.initial_balance,
-                final_equity=self.portfolio.initial_balance,
+        try:
+            if self._db is not None:
+                await self._restore_state()
+            candles_1m = await self.data_provider.get_historical_candles(
+                symbol=symbol, timeframe="1m", start=self.start, end=self.end
             )
 
-        aggregator = TimeframeAggregator(timeframes=self.strategy.timeframes)
-
-        warm_up_bars = self._calculate_warm_up_bars()
-        warm_up_candles = candles_1m[:warm_up_bars]
-        backtest_candles = candles_1m[warm_up_bars:]
-
-        if not backtest_candles:
-            logger.warning("All data consumed by warm-up, no candles for backtesting")
-            return BacktestResults(
-                trades=[],
-                equity_curve=[],
-                start_time=candles_1m[0].timestamp,
-                end_time=candles_1m[-1].timestamp,
-                initial_balance=self.portfolio.initial_balance,
-                final_equity=self.portfolio.initial_balance,
-            )
-
-        # Warm up: feed all but last through warm_up, last through update for on_init
-        if warm_up_candles:
-            if len(warm_up_candles) > 1:
-                aggregator.warm_up(warm_up_candles[:-1])
-            init_data = aggregator.update(warm_up_candles[-1])
-            self.strategy.on_init(init_data)
-
-        # Main backtest loop
-        equity_curve: list[EquityPoint] = []
-
-        for candle in backtest_candles:
-            mtf_data = aggregator.update(candle)
-
-            if isinstance(self.executor, BacktestExecutor):
-                self.executor.current_time = candle.timestamp
-
-            self.portfolio.update_price(candle.close)
-
-            # SL/TP check BEFORE strategy (stops execute before strategy reacts)
-            await self._check_sl_tp(candle)
-
-            signals = self.strategy.on_candle(mtf_data, self.portfolio) or []
-
-            for signal in signals:
-                await self._execute_signal(signal, candle.close)
-
-            equity_curve.append(
-                EquityPoint(
-                    timestamp=candle.timestamp,
-                    equity=self.portfolio.equity,
+            if not candles_1m:
+                logger.warning("No candle data returned for the requested range")
+                return BacktestResults(
+                    trades=[],
+                    equity_curve=[],
+                    start_time=self.start,
+                    end_time=self.end,
+                    initial_balance=self.portfolio.initial_balance,
+                    final_equity=self.portfolio.initial_balance,
                 )
+
+            aggregator = TimeframeAggregator(timeframes=self.strategy.timeframes)
+
+            warm_up_bars = self._calculate_warm_up_bars()
+            warm_up_candles = candles_1m[:warm_up_bars]
+            backtest_candles = candles_1m[warm_up_bars:]
+
+            if not backtest_candles:
+                logger.warning("All data consumed by warm-up, no candles for backtesting")
+                return BacktestResults(
+                    trades=[],
+                    equity_curve=[],
+                    start_time=candles_1m[0].timestamp,
+                    end_time=candles_1m[-1].timestamp,
+                    initial_balance=self.portfolio.initial_balance,
+                    final_equity=self.portfolio.initial_balance,
+                )
+
+            # Warm up: feed all but last through warm_up, last through update for on_init
+            if warm_up_candles:
+                if len(warm_up_candles) > 1:
+                    aggregator.warm_up(warm_up_candles[:-1])
+                init_data = aggregator.update(warm_up_candles[-1])
+                self.strategy.on_init(init_data)
+
+            # Main backtest loop
+            equity_curve: list[EquityPoint] = []
+
+            for candle in backtest_candles:
+                mtf_data = aggregator.update(candle)
+
+                if isinstance(self.executor, BacktestExecutor):
+                    self.executor.current_time = candle.timestamp
+
+                self.portfolio.update_price(candle.close)
+
+                # SL/TP check BEFORE strategy (stops execute before strategy reacts)
+                await self._check_sl_tp(candle)
+
+                signals = self.strategy.on_candle(mtf_data, self.portfolio) or []
+
+                for signal in signals:
+                    await self._execute_signal(signal, candle.close)
+
+                equity_curve.append(
+                    EquityPoint(
+                        timestamp=candle.timestamp,
+                        equity=self.portfolio.equity,
+                    )
+                )
+
+            # Force-close remaining positions
+            last_candle = backtest_candles[-1]
+            await self._close_all_positions(last_candle.close, last_candle.timestamp)
+
+            await self._save_state()
+
+            results = BacktestResults(
+                trades=list(self.portfolio.trades),
+                equity_curve=equity_curve,
+                start_time=backtest_candles[0].timestamp,
+                end_time=last_candle.timestamp,
+                initial_balance=self.portfolio.initial_balance,
+                final_equity=self.portfolio.equity,
             )
 
-        # Force-close remaining positions
-        last_candle = backtest_candles[-1]
-        await self._close_all_positions(last_candle.close, last_candle.timestamp)
+            logger.info("Backtest complete.\n%s", results.summary())
+            return results
+        finally:
+            if self._db is not None:
+                await self._db.close()
 
-        results = BacktestResults(
-            trades=list(self.portfolio.trades),
-            equity_curve=equity_curve,
-            start_time=backtest_candles[0].timestamp,
-            end_time=last_candle.timestamp,
-            initial_balance=self.portfolio.initial_balance,
-            final_equity=self.portfolio.equity,
-        )
+    async def _restore_state(self) -> None:
+        """Restore portfolio and strategy state from the database.
 
-        logger.info("Backtest complete.\n%s", results.summary())
-        return results
+        Called at the start of a backtest/forward-test when persist=True.
+        Clears any existing portfolio positions before restoring from DB
+        to prevent duplicates.
+        """
+        if self._db is None:
+            return
+
+        saved_portfolio = await self._db.get_portfolio()
+        if saved_portfolio is not None:
+            self.portfolio.balance = saved_portfolio.balance
+            logger.info("Restored portfolio balance: %.2f", saved_portfolio.balance)
+
+        self.portfolio.positions.clear()
+        positions = await self._db.get_open_positions()
+        for pos in positions:
+            self.portfolio.positions.append(pos)
+        if positions:
+            logger.info("Restored %d open positions", len(positions))
+
+        strategy_name = type(self.strategy).__name__
+        state = await self._db.get_strategy_state(strategy_name)
+        if state is not None:
+            self.strategy.set_state(state)
+            logger.info("Restored strategy state for %s", strategy_name)
+
+    async def _save_state(self) -> None:
+        """Persist portfolio and strategy state to the database.
+
+        Called at the end of the backtest loop when persist=True.
+        """
+        if self._db is None:
+            return
+
+        await self._db.save_portfolio(self.portfolio)
+        strategy_name = type(self.strategy).__name__
+        await self._db.save_strategy_state(strategy_name, self.strategy.get_state())
+        logger.info("Saved portfolio and strategy state")
 
     async def _check_sl_tp(self, candle: Candle) -> None:
         """Check all open positions for SL/TP hits and close if triggered."""
@@ -318,6 +381,9 @@ class Engine:
                 exit_price = self._get_exit_price(position, result)
                 trade = await self.executor.close_position(position, exit_price, result)
                 self.portfolio.close_position(position.id, trade)
+                if self._db is not None:
+                    await self._db.delete_position(position.id)
+                    await self._db.save_trade(trade)
                 logger.debug(
                     "Position %s closed by %s at %.2f (PnL: %.2f)",
                     position.id,
@@ -340,6 +406,8 @@ class Engine:
 
         if isinstance(result, Position):
             self.portfolio.open_position(result)
+            if self._db is not None:
+                await self._db.save_position(result)
             logger.debug(
                 "Opened %s position %s at %.2f (size: $%.2f)",
                 result.side,
@@ -349,6 +417,9 @@ class Engine:
             )
         elif isinstance(result, Trade):
             self.portfolio.close_position(result.id, result)
+            if self._db is not None:
+                await self._db.delete_position(result.id)
+                await self._db.save_trade(result)
             logger.debug(
                 "Closed position %s by signal at %.2f (PnL: %.2f)",
                 result.id,
@@ -362,6 +433,9 @@ class Engine:
         Uses exit_reason="signal" since the existing type system only supports
         "stop_loss", "take_profit", and "signal". These force-closes are
         identifiable in logs via the "End-of-backtest" prefix.
+
+        Persists each closed trade and removes the position from the DB
+        so that crash-recovery does not re-open already-closed positions.
         """
         if isinstance(self.executor, BacktestExecutor):
             self.executor.current_time = timestamp
@@ -369,6 +443,9 @@ class Engine:
         for position in list(self.portfolio.positions):
             trade = await self.executor.close_position(position, price, "signal")
             self.portfolio.close_position(position.id, trade)
+            if self._db is not None:
+                await self._db.delete_position(position.id)
+                await self._db.save_trade(trade)
             logger.debug(
                 "End-of-backtest: force-closed position %s at %.2f (PnL: %.2f)",
                 position.id,
