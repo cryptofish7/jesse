@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import csv
 import logging
 from dataclasses import dataclass
 from datetime import datetime
+from pathlib import Path
 
 from src.core.portfolio import Portfolio
 from src.core.timeframe import TimeframeAggregator, get_timeframe_minutes
@@ -115,6 +117,65 @@ class BacktestResults:
             "=" * 50,
         ]
         return "\n".join(lines)
+
+    def plot_equity_curve(self, output_path: str | Path) -> None:
+        """Save an interactive equity curve chart as HTML.
+
+        Delegates to :func:`src.analysis.charts.plot_equity_curve`.
+        """
+        from src.analysis.charts import plot_equity_curve
+
+        plot_equity_curve(self.equity_curve, output_path)
+
+    def plot_trades(self, candles: list[Candle], output_path: str | Path) -> None:
+        """Save an interactive candlestick + trade overlay chart as HTML.
+
+        Delegates to :func:`src.analysis.charts.plot_trades`.
+        """
+        from src.analysis.charts import plot_trades
+
+        plot_trades(candles, self.trades, output_path)
+
+    def export_trades(self, output_path: str | Path) -> None:
+        """Export trades to a CSV file.
+
+        Columns: id, side, entry_price, exit_price, entry_time, exit_time,
+        size, size_usd, pnl, pnl_percent, exit_reason.
+
+        An empty trade list produces a CSV with headers only.
+        """
+        fieldnames = [
+            "id",
+            "side",
+            "entry_price",
+            "exit_price",
+            "entry_time",
+            "exit_time",
+            "size",
+            "size_usd",
+            "pnl",
+            "pnl_percent",
+            "exit_reason",
+        ]
+        with open(str(output_path), "w", newline="") as f:
+            writer = csv.DictWriter(f, fieldnames=fieldnames)
+            writer.writeheader()
+            for trade in self.trades:
+                writer.writerow(
+                    {
+                        "id": trade.id,
+                        "side": trade.side,
+                        "entry_price": trade.entry_price,
+                        "exit_price": trade.exit_price,
+                        "entry_time": trade.entry_time.isoformat(),
+                        "exit_time": trade.exit_time.isoformat(),
+                        "size": trade.size,
+                        "size_usd": trade.size_usd,
+                        "pnl": trade.pnl,
+                        "pnl_percent": trade.pnl_percent,
+                        "exit_reason": trade.exit_reason,
+                    }
+                )
 
 
 # --- Engine ---

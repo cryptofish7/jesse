@@ -153,25 +153,25 @@ class Engine:
         strategy: Strategy,
         data_provider: DataProvider,
         executor: Executor,
-        alerter: Alerter | None = None,
-        persist: bool = False
+        alerter: object | None = None,
+        persist: bool = False,
+        start: datetime | None = None,
+        end: datetime | None = None,
     ):
         self.strategy = strategy
         self.data_provider = data_provider
         self.executor = executor
         self.alerter = alerter
         self.persist = persist
-        self.portfolio = Portfolio()
-    
+        self.start = start
+        self.end = end
+        self.portfolio = Portfolio(initial_balance=executor.initial_balance)
+
     async def run(self) -> BacktestResults | None:
         """Main entry point. Returns results for backtest, runs forever for live."""
         pass
-    
-    async def _on_candle(self, timeframe: str, candle: Candle) -> None:
-        """Called when a new candle closes."""
-        pass
-    
-    async def _check_sl_tp(self, candle: Candle) -> list[Trade]:
+
+    async def _check_sl_tp(self, candle: Candle) -> None:
         """Check if any positions hit SL or TP."""
         pass
 ```
@@ -366,27 +366,32 @@ function resolve_sl_tp(position, candle, current_timeframe):
 @dataclass
 class Portfolio:
     initial_balance: float
-    balance: float          # Available USDT
+    balance: float | None = None  # Available USDT (defaults to initial_balance)
     positions: list[Position]
     trades: list[Trade]     # Closed positions
-    
+    _current_price: float = 0.0
+
+    def update_price(self, price: float) -> None:
+        """Update the last known market price for equity calculation."""
+        self._current_price = price
+
     @property
     def equity(self) -> float:
         """Balance + unrealized PnL of open positions."""
-        unrealized = sum(p.unrealized_pnl for p in self.positions)
+        unrealized = sum(p.unrealized_pnl(self._current_price) for p in self.positions)
         return self.balance + unrealized
-    
+
     @property
     def has_position(self) -> bool:
         return len(self.positions) > 0
-    
+
     def get_position(self, position_id: str) -> Position | None:
         return next((p for p in self.positions if p.id == position_id), None)
-    
+
     def open_position(self, position: Position) -> None:
         self.positions.append(position)
         self.balance -= position.size_usd  # Lock margin
-    
+
     def close_position(self, position_id: str, trade: Trade) -> None:
         self.positions = [p for p in self.positions if p.id != position_id]
         self.trades.append(trade)
@@ -758,8 +763,8 @@ class Settings(BaseSettings):
 
     exchange: Literal["bybit", "binance", "hyperliquid"] = "binance"
     symbol: str = "BTC/USDT:USDT"
-    api_key: str
-    api_secret: str
+    api_key: str = ""
+    api_secret: str = ""
     initial_balance: float = 10000.0
 
     discord_webhook_url: str | None = None

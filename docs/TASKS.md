@@ -249,34 +249,34 @@ Track progress by marking tasks as complete: `- [x]`
 
 **Goal:** Calculate performance metrics and generate charts.
 
-- [ ] Create `src/analysis/metrics.py`
-  - [ ] Implement `calculate_win_rate(trades) -> float`
-  - [ ] Implement `calculate_profit_factor(trades) -> float`
-  - [ ] Implement `calculate_total_return(initial, final) -> float`
-  - [ ] Implement `calculate_max_drawdown(equity_curve) -> float`
-  - [ ] Implement `calculate_sharpe_ratio(equity_curve) -> float` (optional)
+- [x] Create `src/analysis/metrics.py`
+  - [x] Implement `calculate_win_rate(trades) -> float`
+  - [x] Implement `calculate_profit_factor(trades) -> float`
+  - [x] Implement `calculate_total_return(initial, final) -> float`
+  - [x] Implement `calculate_max_drawdown(equity_curve) -> float`
+  - [x] Implement `calculate_sharpe_ratio(equity_curve) -> float` (optional)
 
-- [ ] Create `src/analysis/charts.py`
-  - [ ] Implement `plot_equity_curve(equity_curve, output_path)`
-    - [ ] Use Plotly for interactive HTML
-    - [ ] Show equity over time
-    - [ ] Mark drawdown periods
-  - [ ] Implement `plot_trades(candles, trades, output_path)`
-    - [ ] Price chart with candlesticks
-    - [ ] Entry markers (green for long, red for short)
-    - [ ] Exit markers (with SL/TP/signal distinction)
+- [x] Create `src/analysis/charts.py`
+  - [x] Implement `plot_equity_curve(equity_curve, output_path)`
+    - [x] Use Plotly for interactive HTML
+    - [x] Show equity over time
+    - [x] Mark drawdown periods
+  - [x] Implement `plot_trades(candles, trades, output_path)`
+    - [x] Price chart with candlesticks
+    - [x] Entry markers (green for long, red for short)
+    - [x] Exit markers (with SL/TP/signal distinction)
     - [ ] Optional: show SL/TP levels as horizontal lines
 
-- [ ] Add chart generation to BacktestResults
-  - [ ] Method: `plot_equity_curve(output_path)`
-  - [ ] Method: `plot_trades(output_path)`
-  - [ ] Method: `export_trades(output_path)` (CSV)
+- [x] Add chart generation to BacktestResults
+  - [x] Method: `plot_equity_curve(output_path)`
+  - [x] Method: `plot_trades(output_path)`
+  - [x] Method: `export_trades(output_path)` (CSV)
 
-- [ ] Write unit tests
-  - [ ] Test win rate calculation (edge cases: 0 trades, all wins, all losses)
-  - [ ] Test profit factor calculation (edge case: no losses)
-  - [ ] Test max drawdown calculation
-  - [ ] Test chart generation (verify files created)
+- [x] Write unit tests
+  - [x] Test win rate calculation (edge cases: 0 trades, all wins, all losses)
+  - [x] Test profit factor calculation (edge case: no losses)
+  - [x] Test max drawdown calculation
+  - [x] Test chart generation (verify files created)
 
 ---
 
@@ -574,7 +574,7 @@ See `PRD.md` Section 6 for the full list of post-v1 enhancements.
 | 4. Strategy Interface | Complete | 4/4 |
 | 5. Backtest Executor | Complete | 4/4 |
 | 6. Backtest Engine | Complete | 4/4 |
-| 7. Analysis & Visualization | Not Started | 0/4 |
+| 7. Analysis & Visualization | Complete | 4/4 |
 | 8. Persistence Layer | Not Started | 0/4 |
 | 9. Live Data Provider | Not Started | 0/4 |
 | 10. Paper Executor | Not Started | 0/3 |
@@ -585,4 +585,4 @@ See `PRD.md` Section 6 for the full list of post-v1 enhancements.
 | 15. Documentation & Polish | Not Started | 0/5 |
 | 16. Future Enhancements | Backlog | — |
 
-**Total: 26/61 tasks complete**
+**Total: 30/61 tasks complete**

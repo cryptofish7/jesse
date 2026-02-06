@@ -41,11 +41,11 @@ This file provides context for Claude Code sessions working on this project.
 - Running commands (tests, linters, CI checks)
 - Trivial fixes (1-2 lines: typo, import, format issue)
 - Task tracker updates
-- Skill invocations (`/docs-consolidator`, `/ci-cd-pipeline`)
+- Skill invocations (`/docs-consolidator`, `/ci-cd-pipeline`, `/smoke-test`)
 
 **Verification protocol**: After any subagent writes code, the orchestrator runs the full verify suite before proceeding. Never trust subagent output without verification.
 
-**Progress tracking**: Use TaskCreate to register each development and pipeline step. Set `owner` to identify which agent handles it (e.g., "Planner", "Implementer", "Code reviewer", "Debugger", or "Orchestrator" for steps you run directly). Mark `in_progress` when starting, `completed` when done. The user sees live progress via `Ctrl+T`.
+**Progress tracking**: Use TaskCreate to register each development and pipeline step. Prefix every `subject` and `activeForm` with the responsible agent in brackets so the user can see who's doing what (e.g., `subject: "[Planner] Plan: add auth"`, `activeForm: "[Planner] Planning auth"`). Mark `in_progress` when starting, `completed` when done. The user sees live progress via `Ctrl+T`.
 
 ### After Completing a Task — Autonomous Pipeline
 
@@ -54,12 +54,13 @@ Run this pipeline after every completed task. No user input required unless a st
 **Step 1: Verify locally.**
 Run the project's linting, formatting, type checking, and test commands. Check the Commands section of this file or `pyproject.toml`/`package.json`/`Makefile` for the exact commands. Fix any failures before proceeding.
 
-**Step 2: Documentation and CI/CD audit (parallel).**
+**Step 2: Audit docs, CI/CD, and deploy script (parallel).**
 Run these concurrently — they are independent:
 - `/docs-consolidator` — audit and sync project docs
 - `/ci-cd-pipeline` — ensure GitHub Actions matches current state
+- `/smoke-test` — update deploy.sh with smoke tests for any new functionality
 
-Skip either if the skill is unavailable. Wait for both to complete before proceeding.
+Skip any if the skill is unavailable. Wait for all to complete before proceeding.
 
 **Step 3: Commit all changes.**
 Stage and commit everything from the task and from Step 2. Write a concise, descriptive commit message. Use conventional commit prefixes when appropriate (`feat:`, `fix:`, `chore:`, `docs:`, `ci:`, `refactor:`, `test:`).
