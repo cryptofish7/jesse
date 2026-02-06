@@ -460,9 +460,20 @@ Track progress by marking tasks as complete: `- [x]`
     - [ ] Arguments: --strategy, --initial-balance
     - [ ] Load strategy by name
     - [ ] Run forward test (blocking)
-  - [ ] Implement `fetch-data` command (utility)
-    - [ ] Arguments: --symbol, --timeframe, --start, --end
-    - [ ] Fetch and cache historical data
+  - [ ] Implement `fetch-data` command with incremental update support
+    - [ ] Make `--timeframe` optional (default: `1m` — the engine only needs 1m; others are aggregated)
+    - [ ] Make `--start` optional (default: 4 years ago if no cache; last cached timestamp if cache exists)
+    - [ ] Make `--end` optional (default: current UTC time)
+    - [ ] Wire `cmd_fetch_data` to `HistoricalDataProvider.get_historical_candles()`
+      - Already handles: cache check, gap detection, incremental fetch, merge, Parquet write
+    - [ ] Log summary on completion: date range, candle count, cache file path
+    - [ ] Close exchange connection after fetch (`provider.close()`)
+    - [ ] Usage examples:
+      - `python main.py fetch-data` — update default symbol (top-up if cache exists, 4yr download if not)
+      - `python main.py fetch-data --start 2022-01-01 --end 2026-01-01` — explicit range
+      - `python main.py fetch-data --symbol ETH/USDT:USDT` — different symbol
+    - [ ] Scheduling: use cron for periodic updates (no built-in scheduler needed)
+      - Example: `0 2 1 * * cd /path/to/jesse && .venv/bin/python main.py fetch-data`
   - [ ] Add `--help` for all commands
 
 - [ ] Add strategy discovery
@@ -559,7 +570,7 @@ See `PRD.md` Section 6 for the full list of post-v1 enhancements.
 |-----------|--------|-------|
 | 1. Project Setup | Complete | 5/5 |
 | 2. Core Types | Complete | 3/3 |
-| 3. Data Layer — Historical | Complete | 5/5 |
+| 3. Data Layer — Historical | In Progress | 5/6 |
 | 4. Strategy Interface | Complete | 4/4 |
 | 5. Backtest Executor | Complete | 4/4 |
 | 6. Backtest Engine | Complete | 4/4 |
