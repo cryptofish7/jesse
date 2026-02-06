@@ -614,6 +614,42 @@ class TestEngineBacktest:
         assert results.total_trades == 1
         assert results.trades[0].exit_reason == "stop_loss"
 
+    @pytest.mark.asyncio
+    async def test_single_long_trade_sl(self) -> None:
+        """Open long, price dips to hit SL — trade closes with negative PnL."""
+        # Dip at candle 150 goes to 100 - 10 = 90, well below SL of ~95.475
+        candles = _make_candles_with_dip(200, start_price=100.0, dip_at=150, dip_amount=10.0)
+        engine = Engine(
+            strategy=OpenOnceStrategy(sl_pct=0.05, tp_pct=0.50),
+            data_provider=FakeDataProvider(candles),
+            executor=BacktestExecutor(initial_balance=10_000.0),
+            start=datetime(2024, 1, 1, tzinfo=UTC),
+            end=datetime(2024, 2, 1, tzinfo=UTC),
+        )
+        results = await engine.run()
+        assert results is not None
+        assert results.total_trades == 1
+        assert results.trades[0].exit_reason == "stop_loss"
+        assert results.trades[0].pnl < 0
+
+    @pytest.mark.asyncio
+    async def test_single_short_trade_tp(self) -> None:
+        """Open short, price dips to hit TP — trade closes with positive PnL."""
+        # Short at ~100.5, TP = 100.5 * 0.90 = 90.45. Dip at candle 150 to 80.
+        candles = _make_candles_with_dip(200, start_price=100.0, dip_at=150, dip_amount=25.0)
+        engine = Engine(
+            strategy=OpenShortOnceStrategy(sl_pct=0.50, tp_pct=0.10),
+            data_provider=FakeDataProvider(candles),
+            executor=BacktestExecutor(initial_balance=10_000.0),
+            start=datetime(2024, 1, 1, tzinfo=UTC),
+            end=datetime(2024, 2, 1, tzinfo=UTC),
+        )
+        results = await engine.run()
+        assert results is not None
+        assert results.total_trades == 1
+        assert results.trades[0].exit_reason == "take_profit"
+        assert results.trades[0].pnl > 0
+
 
 # --- End-to-end with MACrossover ---
 

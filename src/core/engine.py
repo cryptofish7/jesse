@@ -12,7 +12,7 @@ from src.core.types import Candle, Position, Signal, Trade
 from src.data.provider import DataProvider
 from src.execution.backtest import BacktestExecutor
 from src.execution.executor import Executor
-from src.execution.sl_tp import SLTPMonitor
+from src.execution.sl_tp import ExitReason, SLTPMonitor
 from src.strategy.base import Strategy
 
 logger = logging.getLogger(__name__)
@@ -54,7 +54,12 @@ class BacktestResults:
 
     @property
     def win_rate(self) -> float:
-        """Fraction of winning trades (0.0 to 1.0). Returns 0.0 if no trades."""
+        """Fraction of winning trades (0.0 to 1.0). Returns 0.0 if no trades.
+
+        Break-even trades (pnl == 0) count in the denominator but not
+        as wins, so they dilute the win rate. This matches standard
+        trading convention.
+        """
         if not self.trades:
             return 0.0
         return len(self.winning_trades) / len(self.trades)
@@ -227,7 +232,7 @@ class Engine:
             # SL/TP check BEFORE strategy (stops execute before strategy reacts)
             await self._check_sl_tp(candle)
 
-            signals = self.strategy.on_candle(mtf_data, self.portfolio)
+            signals = self.strategy.on_candle(mtf_data, self.portfolio) or []
 
             for signal in signals:
                 await self._execute_signal(signal, candle.close)
@@ -271,7 +276,7 @@ class Engine:
                     trade.pnl,
                 )
 
-    def _get_exit_price(self, position: Position, reason: str) -> float:
+    def _get_exit_price(self, position: Position, reason: ExitReason) -> float:
         """Get the exact SL or TP price for the exit."""
         if reason == "stop_loss":
             return position.stop_loss
@@ -302,7 +307,12 @@ class Engine:
             )
 
     async def _close_all_positions(self, price: float, timestamp: datetime) -> None:
-        """Force-close all remaining open positions at end of backtest."""
+        """Force-close all remaining open positions at end of backtest.
+
+        Uses exit_reason="signal" since the existing type system only supports
+        "stop_loss", "take_profit", and "signal". These force-closes are
+        identifiable in logs via the "End-of-backtest" prefix.
+        """
         if isinstance(self.executor, BacktestExecutor):
             self.executor.current_time = timestamp
 
