@@ -122,8 +122,8 @@ class DataProvider(ABC):
 | `LiveDataProvider` | Forward test | WebSocket connection to exchange |
 
 **Data Sources (in order of preference):**
-1. Bybit — good perpetual API, provides OI data
-2. Binance — largest volume, good historical depth
+1. Binance — largest volume, best historical depth (default)
+2. Bybit — good perpetual API, provides OI data
 3. Hyperliquid — decentralized alternative
 
 **CVD Approach:**
@@ -726,7 +726,9 @@ async def run(self):
 
 ```bash
 # Exchange settings
-EXCHANGE=bybit                    # bybit, binance, hyperliquid
+EXCHANGE=binance                  # bybit, binance, hyperliquid
+API_KEY=your_api_key_here         # Required: exchange API key
+API_SECRET=your_api_secret_here   # Required: exchange API secret
 SYMBOL=BTC/USDT:USDT             # Perpetual symbol
 INITIAL_BALANCE=10000            # Starting paper balance (USDT)
 
@@ -748,10 +750,12 @@ LOG_LEVEL=INFO
 from pydantic import BaseSettings
 
 class Settings(BaseSettings):
-    exchange: str = "bybit"
+    exchange: str = "binance"
     symbol: str = "BTC/USDT:USDT"
+    api_key: str
+    api_secret: str
     initial_balance: float = 10000.0
-    
+
     discord_webhook_url: str | None = None
     
     database_path: str = "data/trading.db"
@@ -926,6 +930,8 @@ CACHE_PATH=/data/candles/
 
 Set in Railway dashboard:
 - `EXCHANGE`
+- `API_KEY`
+- `API_SECRET`
 - `SYMBOL`
 - `INITIAL_BALANCE`
 - `DISCORD_WEBHOOK_URL`
@@ -971,7 +977,7 @@ pytest tests/test_sl_tp.py
 
 | Decision | Options | Status |
 |----------|---------|--------|
-| Exchange selection | Bybit vs Binance vs Hyperliquid | To evaluate during implementation |
+| Exchange selection | Bybit vs Binance vs Hyperliquid | **Decided: Binance** (best historical depth for 1-4yr goal) |
 | CVD data source | Exchange API vs approximation | To investigate API availability |
 | WebSocket library | `websockets` vs `aiohttp` | To decide based on exchange SDK |
 

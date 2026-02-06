@@ -291,7 +291,7 @@ class MultiTimeframeData(dict[str, TimeframeData]):
 | Question | Status |
 |----------|--------|
 | Which exchange has easiest OI/CVD data access? | To investigate during implementation |
-| How far back can we get 1m candle data? | To verify with exchange APIs |
+| How far back can we get 1m candle data? | **Decided: Binance** — best historical depth among supported exchanges. API keys required for higher rate limits when fetching 1-4 years of data. |
 | Historical trade data availability for CVD calculation | To verify with exchange APIs |
 
 ---

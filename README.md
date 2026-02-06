@@ -53,10 +53,12 @@ from strategies.my_strategy import MyStrategy
 
 engine = Engine(
     strategy=MyStrategy(),
-    data_provider=HistoricalDataProvider(symbol="BTC/USDT:USDT", start="2024-01-01", end="2024-12-01"),
-    executor=BacktestExecutor(initial_balance=10000)
+    data_provider=HistoricalDataProvider(symbol="BTC/USDT:USDT"),
+    executor=BacktestExecutor(initial_balance=10000),
+    start=datetime(2024, 1, 1),
+    end=datetime(2024, 12, 1),
 )
-results = engine.run()
+results = await engine.run()
 ```
 
 ## Run Paper Trading
@@ -104,7 +106,9 @@ Copy `.env.example` to `.env` and set:
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `EXCHANGE` | Exchange to use (bybit, binance) | `bybit` |
+| `EXCHANGE` | Exchange to use (bybit, binance) | `binance` |
+| `API_KEY` | Exchange API key (required) | — |
+| `API_SECRET` | Exchange API secret (required) | — |
 | `SYMBOL` | Trading pair | `BTC/USDT:USDT` |
 | `INITIAL_BALANCE` | Starting paper balance (USDT) | `10000` |
 | `DISCORD_WEBHOOK_URL` | Discord alerts webhook | — |

@@ -114,6 +114,14 @@ Track progress by marking tasks as complete: `- [x]`
     - [x] If not, approximate: `cvd += volume * sign(close - open)`
     - [x] Store as cumulative running total
 
+- [ ] Switch default exchange to Binance with required API key authentication
+  - [ ] Change default exchange from `bybit` to `binance` in `src/config.py`
+  - [ ] Add required `api_key: str` and `api_secret: str` fields to Settings
+  - [ ] Update `_create_exchange()` in `src/data/historical.py` to pass credentials to ccxt
+  - [ ] Update `.env.example` with `API_KEY` and `API_SECRET` fields
+  - [ ] Create `tests/conftest.py` with dummy env vars for test isolation
+  - [ ] Update existing tests and add credential pass-through tests
+
 - [x] Write integration tests for data layer
   - [x] Test fetching 1 day of 1m candles
   - [x] Test cache read/write
