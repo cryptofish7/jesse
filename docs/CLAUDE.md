@@ -16,13 +16,36 @@ This file provides context for Claude Code sessions working on this project.
    git checkout main && git pull origin main
    ```
 
-### During Development
+### During Development — Orchestrator Pattern
 
-- Update the task tracker when tasks are completed or discovered.
-- **Before implementing a task:** Spawn a subagent to write a thorough implementation plan. The plan should analyze the relevant code, identify all files that need changes, outline the approach, and flag any risks or open questions. Present the plan for approval before writing any code.
-- **After the plan is approved:** Spawn a subagent to implement the approved plan. The implementation subagent receives the full plan as context and executes it.
-- When stuck or going in circles, stop. Re-plan before continuing.
-- **On any error:** Spawn the `debugger` subagent with the error context. Use its analysis to fix the issue before continuing.
+**You are the orchestrator.** Your role is to coordinate subagents, verify results, and make decisions. Do NOT write implementation code directly. All code generation of more than ~10 lines goes to a subagent via the Task tool. This preserves your context window for coordination across the full task lifecycle.
+
+**Subagent roster:**
+
+| Subagent | How to spawn | Purpose | Writes code? |
+|----------|-------------|---------|-------------|
+| Planner | Task tool (`subagent_type=Explore`) | Analyze code, produce implementation plan | No |
+| Implementer | Task tool (`subagent_type=general-purpose`) | Execute approved plan, write code + tests | Yes |
+| Code reviewer | `code-reviewer` agent | Review PR for bugs, security, style | No |
+| Debugger | `debugger` agent | Diagnose and fix errors, CI failures | Yes |
+
+**Development flow:**
+
+1. **Plan**: Use the Task tool to spawn an Explore subagent. Pass it the task description, file structure, and relevant docs. It reads code and returns an implementation plan. Present the plan to the user for approval.
+2. **Implement**: After approval, use the Task tool to spawn an implementation subagent. Pass it the full approved plan and CLAUDE.md conventions. The subagent writes all code and tests.
+3. **Verify**: After the subagent completes, run the full verify suite (lint, format, typecheck, test). If verification fails, spawn the `debugger` agent for test failures or a Task subagent for lint/type errors.
+4. When stuck or going in circles, stop. Re-plan before continuing.
+
+**When the orchestrator acts directly** (exceptions):
+- Git operations (commit, branch, push, merge)
+- Running commands (tests, linters, CI checks)
+- Trivial fixes (1-2 lines: typo, import, format issue)
+- Task tracker updates
+- Skill invocations (`/docs-consolidator`, `/ci-cd-pipeline`)
+
+**Verification protocol**: After any subagent writes code, the orchestrator runs the full verify suite before proceeding. Never trust subagent output without verification.
+
+**Progress tracking**: Use TaskCreate to register each development and pipeline step. Set `owner` to identify which agent handles it (e.g., "Planner", "Implementer", "Code reviewer", "Debugger", or "Orchestrator" for steps you run directly). Mark `in_progress` when starting, `completed` when done. The user sees live progress via `Ctrl+T`.
 
 ### After Completing a Task — Autonomous Pipeline
 
@@ -31,16 +54,17 @@ Run this pipeline after every completed task. No user input required unless a st
 **Step 1: Verify locally.**
 Run the project's linting, formatting, type checking, and test commands. Check the Commands section of this file or `pyproject.toml`/`package.json`/`Makefile` for the exact commands. Fix any failures before proceeding.
 
-**Step 2: Consolidate documentation.**
-Run the `/docs-consolidator` skill to audit and sync project docs. Skip if the skill is unavailable.
+**Step 2: Documentation and CI/CD audit (parallel).**
+Run these concurrently — they are independent:
+- `/docs-consolidator` — audit and sync project docs
+- `/ci-cd-pipeline` — ensure GitHub Actions matches current state
 
-**Step 3: Audit CI/CD pipeline.**
-Run the `/ci-cd-pipeline` skill to ensure the GitHub Actions pipeline matches the project's current state. Skip if the skill is unavailable.
+Skip either if the skill is unavailable. Wait for both to complete before proceeding.
 
-**Step 4: Commit all changes.**
-Stage and commit everything from the task and from Steps 2-3. Write a concise, descriptive commit message. Use conventional commit prefixes when appropriate (`feat:`, `fix:`, `chore:`, `docs:`, `ci:`, `refactor:`, `test:`).
+**Step 3: Commit all changes.**
+Stage and commit everything from the task and from Step 2. Write a concise, descriptive commit message. Use conventional commit prefixes when appropriate (`feat:`, `fix:`, `chore:`, `docs:`, `ci:`, `refactor:`, `test:`).
 
-**Step 5: Push to a new branch and open a PR.**
+**Step 4: Push to a new branch and open a PR.**
 - Create a branch with a descriptive name: `<type>/<short-slug>` (e.g., `feat/core-types`, `fix/timestamp-bug`, `chore/update-deps`).
 - Push and open a PR:
   ```bash
@@ -49,22 +73,25 @@ Stage and commit everything from the task and from Steps 2-3. Write a concise, d
   gh pr create --fill
   ```
 
-**Step 6: Code review.**
-Spawn the `code-reviewer` subagent to review the PR. If the reviewer identifies issues, fix them on the same branch, commit, and push before proceeding.
+**Step 5: Code review and CI (parallel).**
+Start both immediately after opening the PR:
 
-**Step 7: Wait for CI checks to pass.**
-```bash
-gh pr checks --watch --fail-fast
-```
-- **If checks pass:** Proceed to Step 8.
-- **If checks fail:**
+- **5a**: Spawn the `code-reviewer` subagent to review the PR.
+- **5b**: Run `gh pr checks --watch --fail-fast` to monitor CI.
+
+Handling results:
+- If review returns Critical or Warning findings:
+  - **3+ line fixes**: Spawn a Task subagent to apply them. Do not fix directly.
+  - **1-2 line fixes**: The orchestrator may apply these directly.
+  - Commit and push fixes. CI restarts automatically on the new push.
+- If CI fails:
   1. Identify the failure: `gh pr checks` then `gh run view <run-id> --log-failed`.
-  2. Spawn the `debugger` subagent with the failure context to diagnose and fix the issue.
+  2. Spawn the `debugger` subagent with the failure context.
   3. Apply the fix on the same branch, commit, and push.
-  4. Repeat from the start of Step 7. Max 3 retries.
-  5. If still failing after 3 retries, stop and ask the user for help.
+  4. Max 3 CI retries. If still failing, stop and ask the user for help.
+- **Proceed to Step 6 when**: review is clean (APPROVE or only Nits) AND CI passes.
 
-**Step 8: Merge the PR and clean up.**
+**Step 6: Merge the PR and clean up.**
 ```bash
 gh pr merge --squash --delete-branch
 git checkout main && git pull origin main
@@ -72,10 +99,10 @@ git checkout main && git pull origin main
 - **If merge conflict:**
   1. Rebase onto the default branch: `git fetch origin main && git rebase origin/main`.
   2. Force-push safely: `git push --force-with-lease`.
-  3. Wait for CI again (return to Step 7). Max 1 retry.
+  3. Wait for CI again (return to Step 5b). Max 1 retry.
   4. If the conflict persists, stop and ask the user for help.
 
-**Step 9: Clean up the session.**
+**Step 7: Clean up the session.**
 Run `/clean` to clear the conversation context. This ensures a fresh start for the next task.
 
 ### After Making a Mistake
