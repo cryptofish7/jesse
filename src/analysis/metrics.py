@@ -40,9 +40,9 @@ def calculate_profit_factor(trades: list[Trade]) -> float:
 def calculate_total_return(initial_balance: float, final_equity: float) -> float:
     """Total return as a decimal (e.g. 0.15 = 15%).
 
-    Returns 0.0 if initial_balance is zero.
+    Returns 0.0 if initial_balance is zero or negative.
     """
-    if initial_balance == 0:
+    if initial_balance <= 0:
         return 0.0
     return (final_equity - initial_balance) / initial_balance
 
@@ -65,11 +65,22 @@ def calculate_max_drawdown(equity_curve: list[EquityPoint]) -> float:
     return max_dd
 
 
-def calculate_sharpe_ratio(equity_curve: list[EquityPoint], risk_free_rate: float = 0.0) -> float:
+def calculate_sharpe_ratio(
+    equity_curve: list[EquityPoint],
+    risk_free_rate: float = 0.0,
+    periods_per_year: float = 252,
+) -> float:
     """Annualized Sharpe ratio from an equity curve.
 
-    Calculates period-over-period returns, then annualizes assuming 252
-    trading days per year.
+    Calculates period-over-period returns, then annualizes using the
+    ``periods_per_year`` scaling factor.
+
+    Args:
+        equity_curve: Chronological list of equity points.
+        risk_free_rate: Per-period risk-free rate (default 0.0).
+        periods_per_year: Number of return periods in a year.
+            Common values: 252 (daily bars), 252*390 (1-minute bars),
+            52 (weekly bars).  Defaults to 252 (daily).
 
     Returns 0.0 for curves with fewer than 2 points or zero standard deviation.
     """
@@ -98,6 +109,6 @@ def calculate_sharpe_ratio(equity_curve: list[EquityPoint], risk_free_rate: floa
     if std_dev == 0.0:
         return 0.0
 
-    # Annualize: multiply by sqrt(252)
-    sharpe = (mean_return - risk_free_rate) * math.sqrt(252) / std_dev
+    # Annualize: multiply by sqrt(periods_per_year)
+    sharpe = (mean_return - risk_free_rate) * math.sqrt(periods_per_year) / std_dev
     return sharpe

@@ -22,6 +22,8 @@ def plot_equity_curve(
         output_path: File path for the HTML output.
         title: Chart title.
     """
+    Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+
     fig = go.Figure()
 
     if not equity_curve:
@@ -99,6 +101,8 @@ def plot_trades(
         output_path: File path for the HTML output.
         title: Chart title.
     """
+    Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+
     fig = go.Figure()
 
     if not candles:

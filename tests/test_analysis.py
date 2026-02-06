@@ -65,13 +65,13 @@ def _make_candle(
     close: float,
     minutes_offset: int = 0,
     *,
-    open: float | None = None,
+    open_price: float | None = None,
     high: float | None = None,
     low: float | None = None,
     volume: float = 100.0,
 ) -> Candle:
     """Create a Candle with sensible defaults."""
-    o = open if open is not None else close - 0.5
+    o = open_price if open_price is not None else close - 0.5
     h = high if high is not None else close + 1.0
     lo = low if low is not None else close - 1.0
     return Candle(
@@ -143,6 +143,17 @@ class TestProfitFactor:
     def test_empty(self) -> None:
         assert calculate_profit_factor([]) == 0.0
 
+    def test_breakeven_trades(self) -> None:
+        """Break-even trades (pnl=0) should be excluded from both gross profit and loss."""
+        trades = [
+            _make_trade(10, id="t1"),
+            _make_trade(0, id="t2"),
+            _make_trade(0, id="t3"),
+            _make_trade(-5, id="t4"),
+        ]
+        # gross_profit=10, gross_loss=5 -> 2.0
+        assert calculate_profit_factor(trades) == pytest.approx(2.0)
+
 
 class TestTotalReturn:
     def test_positive(self) -> None:
@@ -182,6 +193,17 @@ class TestMaxDrawdown:
         curve = [_make_equity_point(100, 0)]
         assert calculate_max_drawdown(curve) == 0.0
 
+    def test_monotonic_decrease(self) -> None:
+        """Curve that only goes down: drawdown should equal total decline from start."""
+        curve = [
+            _make_equity_point(100, 0),
+            _make_equity_point(90, 1),
+            _make_equity_point(80, 2),
+            _make_equity_point(70, 3),
+        ]
+        # Peak is 100, trough is 70 -> dd = 30/100 = 0.30
+        assert calculate_max_drawdown(curve) == pytest.approx(0.30)
+
 
 class TestSharpeRatio:
     def test_empty(self) -> None:
@@ -201,6 +223,12 @@ class TestSharpeRatio:
         curve = [_make_equity_point(100 + i, i) for i in range(50)]
         result = calculate_sharpe_ratio(curve)
         assert result > 0
+
+    def test_negative_returns(self) -> None:
+        """Steadily decreasing equity should give a negative Sharpe."""
+        curve = [_make_equity_point(100 - i * 0.5, i) for i in range(50)]
+        result = calculate_sharpe_ratio(curve)
+        assert result < 0
 
 
 # --- Chart tests ---

@@ -62,42 +62,30 @@ class BacktestResults:
         as wins, so they dilute the win rate. This matches standard
         trading convention.
         """
-        if not self.trades:
-            return 0.0
-        return len(self.winning_trades) / len(self.trades)
+        from src.analysis.metrics import calculate_win_rate
+
+        return calculate_win_rate(self.trades)
 
     @property
     def profit_factor(self) -> float:
         """Gross profit / gross loss. Returns inf if no losses, 0.0 if no wins."""
-        if not self.trades:
-            return 0.0
-        gross_profit = sum(t.pnl for t in self.winning_trades)
-        gross_loss = abs(sum(t.pnl for t in self.losing_trades))
-        if gross_loss == 0.0:
-            return float("inf") if gross_profit > 0 else 0.0
-        return gross_profit / gross_loss
+        from src.analysis.metrics import calculate_profit_factor
+
+        return calculate_profit_factor(self.trades)
 
     @property
     def total_return(self) -> float:
         """Total return as a decimal (e.g., 0.15 = 15%)."""
-        if self.initial_balance == 0:
-            return 0.0
-        return (self.final_equity - self.initial_balance) / self.initial_balance
+        from src.analysis.metrics import calculate_total_return
+
+        return calculate_total_return(self.initial_balance, self.final_equity)
 
     @property
     def max_drawdown(self) -> float:
         """Maximum peak-to-trough drawdown as a decimal (e.g., 0.10 = 10%)."""
-        if not self.equity_curve:
-            return 0.0
-        peak = self.equity_curve[0].equity
-        max_dd = 0.0
-        for point in self.equity_curve:
-            if point.equity > peak:
-                peak = point.equity
-            if peak > 0:
-                dd = (peak - point.equity) / peak
-                max_dd = max(max_dd, dd)
-        return max_dd
+        from src.analysis.metrics import calculate_max_drawdown
+
+        return calculate_max_drawdown(self.equity_curve)
 
     def summary(self) -> str:
         """Human-readable summary of backtest results."""
@@ -157,6 +145,7 @@ class BacktestResults:
             "pnl_percent",
             "exit_reason",
         ]
+        Path(output_path).parent.mkdir(parents=True, exist_ok=True)
         with open(str(output_path), "w", newline="") as f:
             writer = csv.DictWriter(f, fieldnames=fieldnames)
             writer.writeheader()
