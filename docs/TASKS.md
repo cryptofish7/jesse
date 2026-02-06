@@ -114,13 +114,13 @@ Track progress by marking tasks as complete: `- [x]`
     - [x] If not, approximate: `cvd += volume * sign(close - open)`
     - [x] Store as cumulative running total
 
-- [ ] Switch default exchange to Binance with required API key authentication
-  - [ ] Change default exchange from `bybit` to `binance` in `src/config.py`
-  - [ ] Add required `api_key: str` and `api_secret: str` fields to Settings
-  - [ ] Update `_create_exchange()` in `src/data/historical.py` to pass credentials to ccxt
-  - [ ] Update `.env.example` with `API_KEY` and `API_SECRET` fields
-  - [ ] Create `tests/conftest.py` with dummy env vars for test isolation
-  - [ ] Update existing tests and add credential pass-through tests
+- [x] Switch default exchange to Binance with required API key authentication
+  - [x] Change default exchange from `bybit` to `binance` in `src/config.py`
+  - [x] Add required `api_key: str` and `api_secret: str` fields to Settings
+  - [x] Update `_create_exchange()` in `src/data/historical.py` to pass credentials to ccxt
+  - [x] Update `.env.example` with `API_KEY` and `API_SECRET` fields
+  - [x] Create `tests/conftest.py` with dummy env vars for test isolation
+  - [x] Update existing tests and add credential pass-through tests
 
 - [x] Write integration tests for data layer
   - [x] Test fetching 1 day of 1m candles
@@ -570,7 +570,7 @@ See `PRD.md` Section 6 for the full list of post-v1 enhancements.
 |-----------|--------|-------|
 | 1. Project Setup | Complete | 5/5 |
 | 2. Core Types | Complete | 3/3 |
-| 3. Data Layer — Historical | In Progress | 5/6 |
+| 3. Data Layer — Historical | Complete | 6/6 |
 | 4. Strategy Interface | Complete | 4/4 |
 | 5. Backtest Executor | Complete | 4/4 |
 | 6. Backtest Engine | Complete | 4/4 |
@@ -585,4 +585,4 @@ See `PRD.md` Section 6 for the full list of post-v1 enhancements.
 | 15. Documentation & Polish | Not Started | 0/5 |
 | 16. Future Enhancements | Backlog | — |
 
-**Total: 25/61 tasks complete**
+**Total: 26/61 tasks complete**

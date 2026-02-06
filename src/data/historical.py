@@ -33,7 +33,21 @@ def _create_exchange() -> ccxt.Exchange:
     cls = exchange_map.get(settings.exchange)
     if cls is None:
         raise ValueError(f"Unsupported exchange: {settings.exchange}")
-    return cls({"enableRateLimit": True})
+
+    config: dict[str, object] = {"enableRateLimit": True}
+    has_key = bool(settings.api_key)
+    has_secret = bool(settings.api_secret)
+    if has_key and has_secret:
+        config["apiKey"] = settings.api_key
+        config["secret"] = settings.api_secret
+    elif has_key or has_secret:
+        missing = "API_SECRET" if has_key else "API_KEY"
+        raise ValueError(f"Partial credentials: {missing} is missing")
+    else:
+        raise ValueError(
+            "API credentials required: set API_KEY and API_SECRET environment variables"
+        )
+    return cls(config)
 
 
 def _filter_range(candles: list[Candle], start_ms: int, end_ms: int) -> list[Candle]:
