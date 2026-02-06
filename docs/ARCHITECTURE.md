@@ -744,31 +744,34 @@ OUTPUT_PATH=output/
 LOG_LEVEL=INFO
 ```
 
-### 8.2 Config Schema (Pydantic)
+### 8.2 Config Schema (Pydantic v2)
 
 ```python
-from pydantic import BaseSettings
+from pydantic import field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
-    exchange: str = "binance"
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+    )
+
+    exchange: Literal["bybit", "binance", "hyperliquid"] = "binance"
     symbol: str = "BTC/USDT:USDT"
     api_key: str
     api_secret: str
     initial_balance: float = 10000.0
 
     discord_webhook_url: str | None = None
-    
+
     database_path: str = "data/trading.db"
     cache_path: str = "data/candles/"
     output_path: str = "output/"
-    
+
     log_level: str = "INFO"
-    
+
     # History defaults
     default_history_candles: int = 525600  # ~1 year of 1m candles
-    
-    class Config:
-        env_file = ".env"
 ```
 
 ---
@@ -891,7 +894,9 @@ dependencies = [
 dev = [
     "pytest>=7.0",
     "pytest-asyncio>=0.21",
+    "pytest-cov>=4.0",        # Coverage
     "ruff>=0.1",              # Linting
+    "mypy>=1.7",              # Type checking
 ]
 ```
 

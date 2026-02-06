@@ -250,12 +250,14 @@ class Portfolio:
 class TimeframeData:
     latest: Candle
     history: list[Candle]  # Most recent N candles
-    open_interest: float   # Latest OI
-    cvd: float             # Cumulative volume delta
 
 class MultiTimeframeData(dict[str, TimeframeData]):
     """Access via data['1m'], data['4h'], etc."""
     pass
+
+# OI and CVD are accessed via the Candle object:
+# data['1m'].latest.open_interest
+# data['1m'].latest.cvd
 ```
 
 ---
