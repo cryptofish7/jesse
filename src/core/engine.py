@@ -242,9 +242,10 @@ class Engine:
 
         if self._db is not None:
             await self._db.initialize()
-            await self._restore_state()
 
         try:
+            if self._db is not None:
+                await self._restore_state()
             candles_1m = await self.data_provider.get_historical_candles(
                 symbol=symbol, timeframe="1m", start=self.start, end=self.end
             )
