@@ -326,35 +326,35 @@ Track progress by marking tasks as complete: `- [x]`
 
 **Goal:** Stream real-time candle data via WebSocket.
 
-- [ ] Create `src/data/live.py`
-  - [ ] Implement `LiveDataProvider` class
-    - [ ] Initialize WebSocket connection
-    - [ ] Method: `subscribe(symbol, timeframes, callback)`
-      - [ ] Subscribe to candle streams for all timeframes
-      - [ ] Parse incoming messages
-      - [ ] Convert to Candle objects
-      - [ ] Call callback on candle close
-    - [ ] Method: `unsubscribe()`
-      - [ ] Close WebSocket connection
-      - [ ] Clean up resources
-    - [ ] Handle connection errors
-      - [ ] Auto-reconnect with exponential backoff
-      - [ ] Alert after N failed attempts
+- [x] Create `src/data/live.py`
+  - [x] Implement `LiveDataProvider` class
+    - [x] Initialize WebSocket connection
+    - [x] Method: `subscribe(symbol, timeframes, callback)`
+      - [x] Subscribe to candle streams for all timeframes
+      - [x] Parse incoming messages
+      - [x] Convert to Candle objects
+      - [x] Call callback on candle close
+    - [x] Method: `unsubscribe()`
+      - [x] Close WebSocket connection
+      - [x] Clean up resources
+    - [x] Handle connection errors
+      - [x] Auto-reconnect with exponential backoff
+      - [x] Alert after N failed attempts
 
-- [ ] Implement exchange-specific WebSocket handlers
-  - [ ] Bybit kline WebSocket
-  - [ ] (Optional) Binance kline WebSocket
+- [x] Implement exchange-specific WebSocket handlers
+  - [x] Binance kline WebSocket (primary — default exchange)
+  - [ ] (Optional) Bybit kline WebSocket
   - [ ] (Optional) Hyperliquid WebSocket
 
-- [ ] Handle live OI and CVD
-  - [ ] Subscribe to OI updates if available
-  - [ ] Calculate CVD from trade stream or approximate
+- [x] Handle live OI and CVD
+  - [x] Subscribe to OI updates if available
+  - [x] Calculate CVD from trade stream or approximate
 
-- [ ] Write integration tests
-  - [ ] Test WebSocket connection
-  - [ ] Test candle parsing
-  - [ ] Test reconnection after disconnect
-  - [ ] Test multiple timeframe subscription
+- [x] Write integration tests
+  - [x] Test WebSocket connection
+  - [x] Test candle parsing
+  - [x] Test reconnection after disconnect
+  - [x] Test multiple timeframe subscription
 
 ---
 
@@ -576,7 +576,7 @@ See `PRD.md` Section 6 for the full list of post-v1 enhancements.
 | 6. Backtest Engine | Complete | 4/4 |
 | 7. Analysis & Visualization | Complete | 4/4 |
 | 8. Persistence Layer | Complete | 4/4 |
-| 9. Live Data Provider | Not Started | 0/4 |
+| 9. Live Data Provider | Complete | 4/4 |
 | 10. Paper Executor | Not Started | 0/3 |
 | 11. Discord Alerts | Not Started | 0/3 |
 | 12. Forward Test Engine | Not Started | 0/4 |
@@ -585,4 +585,4 @@ See `PRD.md` Section 6 for the full list of post-v1 enhancements.
 | 15. Documentation & Polish | Not Started | 0/5 |
 | 16. Future Enhancements | Backlog | — |
 
-**Total: 34/61 tasks complete**
+**Total: 38/61 tasks complete**
