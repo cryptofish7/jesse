@@ -73,6 +73,7 @@ from src.data.cache import read_candles, write_candles
 from src.data.orderflow import approximate_cvd, enrich_with_oi
 from src.execution.executor import Executor
 from src.execution.backtest import BacktestExecutor
+from src.execution.paper import PaperExecutor
 from src.execution.sl_tp import SLTPMonitor
 from src.strategy.base import Strategy
 from src.strategy.examples.ma_crossover import MACrossover
