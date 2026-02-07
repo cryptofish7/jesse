@@ -25,59 +25,101 @@ cp .env.example .env
 # Edit .env with your settings
 ```
 
-## Write a Strategy
+## Strategy Development
+
+Strategies inherit from `Strategy` and implement a single method: `on_candle()`. The engine calls this on every 1-minute candle close, passing all declared timeframes simultaneously.
+
+### Minimal Example
 
 ```python
 # strategies/my_strategy.py
 from src.strategy.base import Strategy
-from src.core.types import Signal, MultiTimeframeData, Portfolio
+from src.core.types import Signal, MultiTimeframeData
+from src.core.portfolio import Portfolio
 
 class MyStrategy(Strategy):
-    timeframes = ['1m', '4h']
+    timeframes = ['1m']
 
     def on_candle(self, data: MultiTimeframeData, portfolio: Portfolio) -> list[Signal]:
-        candle_4h = data['4h'].latest
-        candle_1m = data['1m'].latest
+        price = data['1m'].latest.close
+        history = data['1m'].history  # list of completed Candle objects
 
-        # Your logic here
+        # Return signals or an empty list
         return []
 ```
 
-## Run a Backtest
+### Signals
+
+Strategies communicate with the engine through `Signal` objects:
 
 ```python
-from src.core.engine import Engine
-from src.data.historical import HistoricalDataProvider
-from src.execution.backtest import BacktestExecutor
-from strategies.my_strategy import MyStrategy
+# Open a long position (100% of equity, with SL and TP)
+Signal.open_long(size_percent=1.0, stop_loss=95000, take_profit=105000)
 
-engine = Engine(
-    strategy=MyStrategy(),
-    data_provider=HistoricalDataProvider(symbol="BTC/USDT:USDT"),
-    executor=BacktestExecutor(initial_balance=10000),
-    start=datetime(2024, 1, 1),
-    end=datetime(2024, 12, 1),
-)
-results = await engine.run()
+# Open a short position
+Signal.open_short(size_percent=1.0, stop_loss=105000, take_profit=95000)
+
+# Close a specific position
+Signal.close(position_id="abc123")
+
+# Close the first open position
+Signal.close()
 ```
 
-## Run Paper Trading
+Every open signal requires `size_percent`, `stop_loss`, and `take_profit`. The engine rejects signals with missing fields.
+
+### Multi-Timeframe Strategies
+
+Declare the timeframes you need. Higher timeframes are aggregated automatically from 1-minute data:
 
 ```python
-from src.core.engine import Engine
-from src.data.live import LiveDataProvider
-from src.execution.paper import PaperExecutor
-from src.alerts.discord import DiscordAlerter
-from strategies.my_strategy import MyStrategy
+class MyMTFStrategy(Strategy):
+    timeframes = ['1m', '4h']
 
-engine = Engine(
-    strategy=MyStrategy(),
-    data_provider=LiveDataProvider(symbol="BTC/USDT:USDT"),
-    executor=PaperExecutor(initial_balance=10000),
-    alerter=DiscordAlerter(webhook_url="..."),
-    persist=True
-)
-engine.run()  # Runs continuously
+    def on_candle(self, data: MultiTimeframeData, portfolio: Portfolio) -> list[Signal]:
+        trend = data['4h'].latest.close    # Current (in-progress) 4h candle
+        history_4h = data['4h'].history    # Completed 4h candles
+        entry = data['1m'].latest.close    # Current 1m candle
+        return []
+```
+
+### State Persistence
+
+For crash recovery during forward testing, implement `get_state()` and `set_state()`:
+
+```python
+def get_state(self) -> dict[str, Any]:
+    return {"prev_ma": self._prev_ma}
+
+def set_state(self, state: dict[str, Any]) -> None:
+    self._prev_ma = state.get("prev_ma")
+```
+
+### Data Access
+
+Each timeframe in `data` provides:
+- `data['1m'].latest` -- the current candle (Candle object)
+- `data['1m'].history` -- list of completed candles
+- `data['1m'].latest.cvd` -- cumulative volume delta
+- `data['1m'].latest.open_interest` -- open interest
+
+### Example Strategies
+
+Four built-in examples are included in `src/strategy/examples/`:
+
+| Strategy | File | Description |
+|----------|------|-------------|
+| `MACrossover` | `ma_crossover.py` | Moving average crossover (fast/slow SMA) |
+| `RSIStrategy` | `rsi_strategy.py` | RSI overbought/oversold mean-reversion |
+| `BreakoutStrategy` | `breakout_strategy.py` | Donchian channel breakout |
+| `MTFStrategy` | `mtf_strategy.py` | Multi-timeframe trend-following (4h + 1m) |
+
+Run any example with the CLI:
+
+```bash
+python main.py backtest --strategy MACrossover --start 2024-01-01 --end 2024-12-01
+python main.py backtest --strategy RSIStrategy --start 2024-01-01 --end 2024-12-01
+python main.py backtest --strategy BreakoutStrategy --start 2024-01-01 --end 2024-12-01
 ```
 
 ## Project Structure
@@ -130,6 +172,46 @@ python main.py backtest --strategy MACrossover --start 2024-01-01 --end 2024-12-
 
 # Run forward testing (paper trading, runs continuously)
 python main.py forward-test --strategy MACrossover
+```
+
+Backtest output includes a results summary, equity curve chart (HTML), and trades CSV in `output/<strategy>/`.
+
+### Running Programmatically
+
+```python
+from datetime import datetime, UTC
+from src.core.engine import Engine
+from src.data.historical import HistoricalDataProvider
+from src.execution.backtest import BacktestExecutor
+from src.strategy.examples.ma_crossover import MACrossover
+
+engine = Engine(
+    strategy=MACrossover(),
+    data_provider=HistoricalDataProvider(symbol="BTC/USDT:USDT"),
+    executor=BacktestExecutor(initial_balance=10000),
+    start=datetime(2024, 1, 1, tzinfo=UTC),
+    end=datetime(2024, 12, 1, tzinfo=UTC),
+)
+results = await engine.run()
+print(results.summary())
+```
+
+For forward testing (paper trading with live data):
+
+```python
+from src.core.engine import Engine
+from src.data.live import LiveDataProvider
+from src.execution.paper import PaperExecutor
+from src.alerts.discord import DiscordAlerter
+
+engine = Engine(
+    strategy=MACrossover(),
+    data_provider=LiveDataProvider(symbol="BTC/USDT:USDT"),
+    executor=PaperExecutor(initial_balance=10000),
+    alerter=DiscordAlerter(webhook_url="https://discord.com/api/webhooks/..."),
+    persist=True,
+)
+await engine.run()  # Runs continuously until Ctrl+C
 ```
 
 ## Deploy to Railway
