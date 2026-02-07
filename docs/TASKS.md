@@ -386,28 +386,28 @@ Track progress by marking tasks as complete: `- [x]`
 
 **Goal:** Send notifications for trade events.
 
-- [ ] Create `src/alerts/discord.py`
-  - [ ] Implement `DiscordAlerter` class
-    - [ ] Constructor: webhook_url
-    - [ ] Method: `send_alert(message, embed)`
-    - [ ] Method: `on_strategy_start(strategy_name)`
-    - [ ] Method: `on_trade_open(position)`
-    - [ ] Method: `on_trade_close(trade)`
-    - [ ] Method: `on_error(error_message)`
-  - [ ] Format messages with embeds (colors, fields)
-  - [ ] Handle rate limiting
-  - [ ] Handle send failures gracefully
+- [x] Create `src/alerts/discord.py`
+  - [x] Implement `DiscordAlerter` class
+    - [x] Constructor: webhook_url
+    - [x] Method: `send_alert(message, embed)`
+    - [x] Method: `on_strategy_start(strategy_name)`
+    - [x] Method: `on_trade_open(position)`
+    - [x] Method: `on_trade_close(trade)`
+    - [x] Method: `on_error(error_message)`
+  - [x] Format messages with embeds (colors, fields)
+  - [x] Handle rate limiting
+  - [x] Handle send failures gracefully
 
-- [ ] Integrate alerts with Engine
-  - [ ] Alert on forward test start
-  - [ ] Alert on position open
-  - [ ] Alert on position close (SL/TP/signal)
-  - [ ] Alert on errors
+- [x] Integrate alerts with Engine
+  - [x] Alert on forward test start
+  - [x] Alert on position open
+  - [x] Alert on position close (SL/TP/signal)
+  - [x] Alert on errors
 
-- [ ] Write unit tests
-  - [ ] Test message formatting
-  - [ ] Mock webhook calls
-  - [ ] Test rate limit handling
+- [x] Write unit tests
+  - [x] Test message formatting
+  - [x] Mock webhook calls
+  - [x] Test rate limit handling
 
 ---
 
@@ -578,11 +578,11 @@ See `PRD.md` Section 6 for the full list of post-v1 enhancements.
 | 8. Persistence Layer | Complete | 4/4 |
 | 9. Live Data Provider | Complete | 4/4 |
 | 10. Paper Executor | Complete | 3/3 |
-| 11. Discord Alerts | Not Started | 0/3 |
+| 11. Discord Alerts | Complete | 3/3 |
 | 12. Forward Test Engine | Not Started | 0/4 |
 | 13. CLI & Entry Point | Not Started | 0/4 |
 | 14. Deployment | Not Started | 0/5 |
 | 15. Documentation & Polish | Not Started | 0/5 |
 | 16. Future Enhancements | Backlog | — |
 
-**Total: 41/61 tasks complete**
+**Total: 44/61 tasks complete**
