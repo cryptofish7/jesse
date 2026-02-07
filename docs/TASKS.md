@@ -415,33 +415,33 @@ Track progress by marking tasks as complete: `- [x]`
 
 **Goal:** Run strategies in real-time with paper trading.
 
-- [ ] Extend `Engine` for forward testing
-  - [ ] Implement `run_forward_test()` method
-    - [ ] Connect to LiveDataProvider
-    - [ ] Restore state from database
-    - [ ] Send startup alert
-    - [ ] Enter main event loop
-  - [ ] Handle graceful shutdown
-    - [ ] Catch SIGINT/SIGTERM
-    - [ ] Save all state
-    - [ ] Close connections
-    - [ ] Send shutdown alert
+- [x] Extend `Engine` for forward testing
+  - [x] Implement `run_forward_test()` method
+    - [x] Connect to LiveDataProvider
+    - [x] Restore state from database
+    - [x] Send startup alert
+    - [x] Enter main event loop
+  - [x] Handle graceful shutdown
+    - [x] Catch SIGINT/SIGTERM
+    - [x] Save all state
+    - [x] Close connections
+    - [x] Send shutdown alert
 
-- [ ] Implement crash recovery
-  - [ ] On startup: check for existing positions
-  - [ ] Restore portfolio state
-  - [ ] Restore strategy state
-  - [ ] Resume monitoring open positions
+- [x] Implement crash recovery
+  - [x] On startup: check for existing positions
+  - [x] Restore portfolio state
+  - [x] Restore strategy state
+  - [x] Resume monitoring open positions
 
-- [ ] Add health monitoring
-  - [ ] Track last candle timestamp
-  - [ ] Alert if no data received for N minutes
-  - [ ] Periodic heartbeat log
+- [x] Add health monitoring
+  - [x] Track last candle timestamp
+  - [x] Alert if no data received for N minutes
+  - [x] Periodic heartbeat log
 
-- [ ] Write integration tests
-  - [ ] Test forward test startup
-  - [ ] Test state recovery after restart
-  - [ ] Test graceful shutdown
+- [x] Write integration tests
+  - [x] Test forward test startup
+  - [x] Test state recovery after restart
+  - [x] Test graceful shutdown
 
 ---
 
@@ -579,10 +579,10 @@ See `PRD.md` Section 6 for the full list of post-v1 enhancements.
 | 9. Live Data Provider | Complete | 4/4 |
 | 10. Paper Executor | Complete | 3/3 |
 | 11. Discord Alerts | Complete | 3/3 |
-| 12. Forward Test Engine | Not Started | 0/4 |
+| 12. Forward Test Engine | Complete | 4/4 |
 | 13. CLI & Entry Point | Not Started | 0/4 |
 | 14. Deployment | Not Started | 0/5 |
 | 15. Documentation & Polish | Not Started | 0/5 |
 | 16. Future Enhancements | Backlog | — |
 
-**Total: 44/61 tasks complete**
+**Total: 48/61 tasks complete**
