@@ -93,7 +93,7 @@ class TestCLI:
         result = self._run("backtest", "--start", "2024-01-01", "--end", "2024-06-01")
         assert result.returncode != 0
 
-    def test_backtest_placeholder(self):
+    def test_backtest_unknown_strategy_exits(self):
         result = self._run(
             "backtest",
             "--strategy",
@@ -103,23 +103,16 @@ class TestCLI:
             "--end",
             "2024-06-01",
         )
-        assert result.returncode == 0
-        assert "Not yet implemented" in result.stdout
+        assert result.returncode == 1
+        assert "not found" in result.stdout
 
-    def test_forward_test_placeholder(self):
+    def test_forward_test_unknown_strategy_exits(self):
         result = self._run("forward-test", "--strategy", "TestStrat")
-        assert result.returncode == 0
-        assert "Not yet implemented" in result.stdout
+        assert result.returncode == 1
+        assert "not found" in result.stdout
 
-    def test_fetch_data_placeholder(self):
-        result = self._run(
-            "fetch-data",
-            "--timeframe",
-            "1m",
-            "--start",
-            "2024-01-01",
-            "--end",
-            "2024-06-01",
-        )
+    def test_fetch_data_help(self):
+        result = self._run("fetch-data", "--help")
         assert result.returncode == 0
-        assert "Not yet implemented" in result.stdout
+        assert "timeframe" in result.stdout
+        assert "symbol" in result.stdout
