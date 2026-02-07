@@ -272,8 +272,7 @@ class LiveDataProvider(DataProvider):
 
             if self._consecutive_failures >= MAX_CONSECUTIVE_FAILURES:
                 logger.error(
-                    "Max consecutive failures (%d) reached. "
-                    "Stopping live data provider.",
+                    "Max consecutive failures (%d) reached. Stopping live data provider.",
                     MAX_CONSECUTIVE_FAILURES,
                 )
                 self._running = False
