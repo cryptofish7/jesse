@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import httpx
 
@@ -97,7 +97,7 @@ class DiscordAlerter:
             "title": "Strategy Started",
             "description": f"**{strategy_name}** is now active",
             "color": COLOR_BLUE,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
         await self.send_alert("", embed=embed)
 
@@ -132,7 +132,7 @@ class DiscordAlerter:
                 },
                 {"name": "Position ID", "value": f"`{position.id}`", "inline": True},
             ],
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
         await self.send_alert("", embed=embed)
 
@@ -167,7 +167,7 @@ class DiscordAlerter:
                 {"name": "Exit Reason", "value": exit_reason_display, "inline": True},
                 {"name": "Trade ID", "value": f"`{trade.id}`", "inline": True},
             ],
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
         await self.send_alert("", embed=embed)
 
@@ -177,7 +177,7 @@ class DiscordAlerter:
             "title": "Error",
             "description": error_message,
             "color": COLOR_RED,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
         await self.send_alert("", embed=embed)
 

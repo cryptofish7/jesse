@@ -9,14 +9,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import httpx
 import pytest
 
-from src.alerts.discord import (
-    COLOR_BLUE,
-    COLOR_GREEN,
-    COLOR_RED,
-    DiscordAlerter,
-)
+from src.alerts.discord import COLOR_BLUE, COLOR_GREEN, COLOR_RED, DiscordAlerter
 from src.core.types import Position, Trade
-
 
 # --- Helpers ---
 
@@ -68,7 +62,11 @@ def _trade(
     )
 
 
-def _mock_response(status_code: int = 204, headers: dict | None = None, json_data: dict | None = None) -> httpx.Response:
+def _mock_response(
+    status_code: int = 204,
+    headers: dict | None = None,
+    json_data: dict | None = None,
+) -> httpx.Response:
     """Create a mock httpx.Response."""
     resp = MagicMock(spec=httpx.Response)
     resp.status_code = status_code
@@ -401,7 +399,9 @@ class TestParseRetryAfter:
         assert DiscordAlerter._parse_retry_after(resp) == 1.0
 
     def test_invalid_header_uses_json(self) -> None:
-        resp = _mock_response(429, headers={"Retry-After": "not-a-number"}, json_data={"retry_after": 3.0})
+        resp = _mock_response(
+            429, headers={"Retry-After": "not-a-number"}, json_data={"retry_after": 3.0}
+        )
         assert DiscordAlerter._parse_retry_after(resp) == 3.0
 
 
