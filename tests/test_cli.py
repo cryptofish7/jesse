@@ -3,11 +3,9 @@
 from __future__ import annotations
 
 import argparse
-import asyncio
-import sys
 from datetime import UTC, datetime
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
@@ -15,7 +13,6 @@ from main import _parse_date, build_parser, cmd_backtest, cmd_fetch_data
 from src.core.types import Candle
 from src.strategy.base import Strategy
 from src.strategy.loader import discover_strategies, load_strategy
-
 
 # ---------------------------------------------------------------------------
 # Parser tests
@@ -336,9 +333,11 @@ class TestCmdFetchData:
             end="2024-06-01",
         )
 
-        with patch("src.data.historical.HistoricalDataProvider", return_value=mock_provider):
-            with pytest.raises(RuntimeError, match="exchange down"):
-                await cmd_fetch_data(args)
+        with (
+            patch("src.data.historical.HistoricalDataProvider", return_value=mock_provider),
+            pytest.raises(RuntimeError, match="exchange down"),
+        ):
+            await cmd_fetch_data(args)
 
         mock_provider.close.assert_called_once()
 

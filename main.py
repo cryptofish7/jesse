@@ -168,10 +168,7 @@ async def cmd_fetch_data(args: argparse.Namespace) -> None:
             logger.info("No cache found, fetching from %s", start)
 
     # Determine end date
-    if args.end is not None:
-        end = _parse_date(args.end)
-    else:
-        end = datetime.now(UTC)
+    end = _parse_date(args.end) if args.end is not None else datetime.now(UTC)
 
     if end <= start:
         print(f"Error: end date must be after start date (start={start}, end={end})")
