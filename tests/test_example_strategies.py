@@ -12,7 +12,6 @@ from src.strategy.examples.breakout_strategy import BreakoutStrategy, _channel
 from src.strategy.examples.mtf_strategy import MTFStrategy
 from src.strategy.examples.rsi_strategy import RSIStrategy, _rsi
 
-
 # --- Helpers ---
 
 
