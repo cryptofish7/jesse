@@ -159,9 +159,7 @@ class TestRateLimiting:
     @pytest.mark.asyncio
     async def test_retries_on_429_with_json_retry_after(self) -> None:
         """On 429, falls back to JSON body retry_after if no header."""
-        rate_limited = _mock_response(
-            429, headers={}, json_data={"retry_after": 0.02}
-        )
+        rate_limited = _mock_response(429, headers={}, json_data={"retry_after": 0.02})
         success = _mock_response(204)
 
         self.alerter._client.post = AsyncMock(side_effect=[rate_limited, success])
