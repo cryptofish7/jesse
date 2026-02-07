@@ -449,42 +449,42 @@ Track progress by marking tasks as complete: `- [x]`
 
 **Goal:** Finalize command-line interface for running the system.
 
-- [ ] Update `main.py`
-  - [ ] Implement `backtest` command
-    - [ ] Arguments: --strategy, --start, --end, --initial-balance
-    - [ ] Load strategy by name
-    - [ ] Run backtest
-    - [ ] Print results summary
-    - [ ] Generate charts
-  - [ ] Implement `forward-test` command
-    - [ ] Arguments: --strategy, --initial-balance
-    - [ ] Load strategy by name
-    - [ ] Run forward test (blocking)
-  - [ ] Implement `fetch-data` command with incremental update support
-    - [ ] Make `--timeframe` optional (default: `1m` — the engine only needs 1m; others are aggregated)
-    - [ ] Make `--start` optional (default: 4 years ago if no cache; last cached timestamp if cache exists)
-    - [ ] Make `--end` optional (default: current UTC time)
-    - [ ] Wire `cmd_fetch_data` to `HistoricalDataProvider.get_historical_candles()`
+- [x] Update `main.py`
+  - [x] Implement `backtest` command
+    - [x] Arguments: --strategy, --start, --end, --initial-balance
+    - [x] Load strategy by name
+    - [x] Run backtest
+    - [x] Print results summary
+    - [x] Generate charts
+  - [x] Implement `forward-test` command
+    - [x] Arguments: --strategy, --initial-balance
+    - [x] Load strategy by name
+    - [x] Run forward test (blocking)
+  - [x] Implement `fetch-data` command with incremental update support
+    - [x] Make `--timeframe` optional (default: `1m` — the engine only needs 1m; others are aggregated)
+    - [x] Make `--start` optional (default: 4 years ago if no cache; last cached timestamp if cache exists)
+    - [x] Make `--end` optional (default: current UTC time)
+    - [x] Wire `cmd_fetch_data` to `HistoricalDataProvider.get_historical_candles()`
       - Already handles: cache check, gap detection, incremental fetch, merge, Parquet write
-    - [ ] Log summary on completion: date range, candle count, cache file path
-    - [ ] Close exchange connection after fetch (`provider.close()`)
-    - [ ] Usage examples:
+    - [x] Log summary on completion: date range, candle count, cache file path
+    - [x] Close exchange connection after fetch (`provider.close()`)
+    - [x] Usage examples:
       - `python main.py fetch-data` — update default symbol (top-up if cache exists, 4yr download if not)
       - `python main.py fetch-data --start 2022-01-01 --end 2026-01-01` — explicit range
       - `python main.py fetch-data --symbol ETH/USDT:USDT` — different symbol
-    - [ ] Scheduling: use cron for periodic updates (no built-in scheduler needed)
+    - [x] Scheduling: use cron for periodic updates (no built-in scheduler needed)
       - Example: `0 2 1 * * cd /path/to/jesse && .venv/bin/python main.py fetch-data`
-  - [ ] Add `--help` for all commands
+  - [x] Add `--help` for all commands
 
-- [ ] Add strategy discovery
-  - [ ] Scan `strategies/` directory
-  - [ ] Import strategy classes by name
-  - [ ] Validate strategy implements required interface
+- [x] Add strategy discovery
+  - [x] Scan `strategies/` directory
+  - [x] Import strategy classes by name
+  - [x] Validate strategy implements required interface
 
-- [ ] Write CLI tests
-  - [ ] Test argument parsing
-  - [ ] Test strategy loading
-  - [ ] Test error handling for invalid inputs
+- [x] Write CLI tests
+  - [x] Test argument parsing
+  - [x] Test strategy loading
+  - [x] Test error handling for invalid inputs
 
 ---
 
@@ -580,9 +580,9 @@ See `PRD.md` Section 6 for the full list of post-v1 enhancements.
 | 10. Paper Executor | Complete | 3/3 |
 | 11. Discord Alerts | Complete | 3/3 |
 | 12. Forward Test Engine | Complete | 4/4 |
-| 13. CLI & Entry Point | Not Started | 0/4 |
+| 13. CLI & Entry Point | Complete | 4/4 |
 | 14. Deployment | Not Started | 0/5 |
 | 15. Documentation & Polish | Not Started | 0/5 |
 | 16. Future Enhancements | Backlog | — |
 
-**Total: 48/61 tasks complete**
+**Total: 52/61 tasks complete**
