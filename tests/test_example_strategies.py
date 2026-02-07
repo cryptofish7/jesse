@@ -484,7 +484,11 @@ class TestMTFStrategy:
         candles_4h = _make_candles([120, 115, 110, 105, 100])
         # Set latest 4h below trend SMA
         latest_4h = _candle_at(
-            base, open_=96, high=97, low=95, close=96  # Below SMA of ~105
+            base,
+            open_=96,
+            high=97,
+            low=95,
+            close=96,  # Below SMA of ~105
         )
 
         # 1m: same bullish crossover pattern
