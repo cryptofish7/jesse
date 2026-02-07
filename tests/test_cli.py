@@ -29,12 +29,17 @@ class TestBuildParser:
 
     def test_backtest_required_args(self) -> None:
         parser = build_parser()
-        args = parser.parse_args([
-            "backtest",
-            "--strategy", "MACrossover",
-            "--start", "2024-01-01",
-            "--end", "2024-06-01",
-        ])
+        args = parser.parse_args(
+            [
+                "backtest",
+                "--strategy",
+                "MACrossover",
+                "--start",
+                "2024-01-01",
+                "--end",
+                "2024-06-01",
+            ]
+        )
         assert args.command == "backtest"
         assert args.strategy == "MACrossover"
         assert args.start == "2024-01-01"
@@ -43,13 +48,19 @@ class TestBuildParser:
 
     def test_backtest_custom_balance(self) -> None:
         parser = build_parser()
-        args = parser.parse_args([
-            "backtest",
-            "--strategy", "MyStrat",
-            "--start", "2024-01-01",
-            "--end", "2024-12-01",
-            "--initial-balance", "50000",
-        ])
+        args = parser.parse_args(
+            [
+                "backtest",
+                "--strategy",
+                "MyStrat",
+                "--start",
+                "2024-01-01",
+                "--end",
+                "2024-12-01",
+                "--initial-balance",
+                "50000",
+            ]
+        )
         assert args.initial_balance == 50000.0
 
     def test_backtest_missing_strategy_exits(self) -> None:
@@ -69,21 +80,28 @@ class TestBuildParser:
 
     def test_forward_test_required_args(self) -> None:
         parser = build_parser()
-        args = parser.parse_args([
-            "forward-test",
-            "--strategy", "MACrossover",
-        ])
+        args = parser.parse_args(
+            [
+                "forward-test",
+                "--strategy",
+                "MACrossover",
+            ]
+        )
         assert args.command == "forward-test"
         assert args.strategy == "MACrossover"
         assert args.initial_balance == 10000.0
 
     def test_forward_test_custom_balance(self) -> None:
         parser = build_parser()
-        args = parser.parse_args([
-            "forward-test",
-            "--strategy", "MyStrat",
-            "--initial-balance", "25000",
-        ])
+        args = parser.parse_args(
+            [
+                "forward-test",
+                "--strategy",
+                "MyStrat",
+                "--initial-balance",
+                "25000",
+            ]
+        )
         assert args.initial_balance == 25000.0
 
     def test_forward_test_missing_strategy_exits(self) -> None:
@@ -102,13 +120,19 @@ class TestBuildParser:
 
     def test_fetch_data_explicit_args(self) -> None:
         parser = build_parser()
-        args = parser.parse_args([
-            "fetch-data",
-            "--symbol", "ETH/USDT:USDT",
-            "--timeframe", "4h",
-            "--start", "2022-01-01",
-            "--end", "2024-01-01",
-        ])
+        args = parser.parse_args(
+            [
+                "fetch-data",
+                "--symbol",
+                "ETH/USDT:USDT",
+                "--timeframe",
+                "4h",
+                "--start",
+                "2022-01-01",
+                "--end",
+                "2024-01-01",
+            ]
+        )
         assert args.symbol == "ETH/USDT:USDT"
         assert args.timeframe == "4h"
         assert args.start == "2022-01-01"
@@ -194,7 +218,7 @@ class TestUserStrategyDiscovery:
 
     def test_discover_user_strategy(self, tmp_path: Path) -> None:
         """Write a temporary strategy file and verify it's discovered."""
-        strategy_code = '''
+        strategy_code = """
 from src.core.portfolio import Portfolio
 from src.core.types import MultiTimeframeData, Signal
 from src.strategy.base import Strategy
@@ -204,7 +228,7 @@ class TestUserStrat(Strategy):
 
     def on_candle(self, data: MultiTimeframeData, portfolio: Portfolio) -> list[Signal]:
         return []
-'''
+"""
         strategy_file = tmp_path / "test_user_strat.py"
         strategy_file.write_text(strategy_code)
 

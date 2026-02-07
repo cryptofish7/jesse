@@ -71,9 +71,7 @@ def load_strategy(name: str) -> Strategy:
     if name not in strategies:
         available = sorted(strategies.keys())
         available_str = ", ".join(available) if available else "(none found)"
-        raise ValueError(
-            f"Strategy '{name}' not found. Available strategies: {available_str}"
-        )
+        raise ValueError(f"Strategy '{name}' not found. Available strategies: {available_str}")
 
     cls = strategies[name]
     logger.info("Loading strategy: %s", name)
@@ -105,11 +103,7 @@ def _import_strategies_from_file(file_path: Path) -> list[type[Strategy]]:
 
     classes: list[type[Strategy]] = []
     for _name, obj in inspect.getmembers(module, inspect.isclass):
-        if (
-            issubclass(obj, Strategy)
-            and obj is not Strategy
-            and not inspect.isabstract(obj)
-        ):
+        if issubclass(obj, Strategy) and obj is not Strategy and not inspect.isabstract(obj):
             classes.append(obj)
 
     if classes:
