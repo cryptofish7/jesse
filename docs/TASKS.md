@@ -362,23 +362,23 @@ Track progress by marking tasks as complete: `- [x]`
 
 **Goal:** Simulate order execution for forward testing.
 
-- [ ] Create `src/execution/paper.py`
-  - [ ] Implement `PaperExecutor` class
-    - [ ] Fill at current market price
-    - [ ] Track simulated positions
-    - [ ] Calculate PnL in real-time
-    - [ ] Method: `execute(signal, price, portfolio)`
-    - [ ] Method: `close_position(position, price, reason)`
+- [x] Create `src/execution/paper.py`
+  - [x] Implement `PaperExecutor` class
+    - [x] Fill at current market price
+    - [x] Track simulated positions
+    - [x] Calculate PnL in real-time
+    - [x] Method: `execute(signal, price, portfolio)`
+    - [x] Method: `close_position(position, price, reason)`
 
-- [ ] Add real-time position monitoring
-  - [ ] Update unrealized PnL on each price update
-  - [ ] Check SL/TP on each tick (not just candle close)
-  - [ ] Trigger alerts on position changes
+- [x] Add real-time position monitoring
+  - [x] Update unrealized PnL on each price update
+  - [x] Check SL/TP on each tick (not just candle close)
+  - [x] Trigger alerts on position changes
 
-- [ ] Write unit tests
-  - [ ] Test paper execution fills
-  - [ ] Test real-time PnL updates
-  - [ ] Test SL/TP monitoring
+- [x] Write unit tests
+  - [x] Test paper execution fills
+  - [x] Test real-time PnL updates
+  - [x] Test SL/TP monitoring
 
 ---
 
@@ -577,7 +577,7 @@ See `PRD.md` Section 6 for the full list of post-v1 enhancements.
 | 7. Analysis & Visualization | Complete | 4/4 |
 | 8. Persistence Layer | Complete | 4/4 |
 | 9. Live Data Provider | Complete | 4/4 |
-| 10. Paper Executor | Not Started | 0/3 |
+| 10. Paper Executor | Complete | 3/3 |
 | 11. Discord Alerts | Not Started | 0/3 |
 | 12. Forward Test Engine | Not Started | 0/4 |
 | 13. CLI & Entry Point | Not Started | 0/4 |
@@ -585,4 +585,4 @@ See `PRD.md` Section 6 for the full list of post-v1 enhancements.
 | 15. Documentation & Polish | Not Started | 0/5 |
 | 16. Future Enhancements | Backlog | — |
 
-**Total: 38/61 tasks complete**
+**Total: 41/61 tasks complete**
