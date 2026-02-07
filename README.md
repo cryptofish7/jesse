@@ -116,6 +116,80 @@ Copy `.env.example` to `.env` and set:
 | `CACHE_PATH` | Parquet cache directory | `data/candles/` |
 | `LOG_LEVEL` | Logging level | `INFO` |
 
+## CLI Usage
+
+```bash
+# Fetch historical data (incremental if cache exists)
+python main.py fetch-data
+
+# Fetch with explicit date range
+python main.py fetch-data --start 2022-01-01 --end 2026-01-01
+
+# Run a backtest
+python main.py backtest --strategy MACrossover --start 2024-01-01 --end 2024-12-01
+
+# Run forward testing (paper trading, runs continuously)
+python main.py forward-test --strategy MACrossover
+```
+
+## Deploy to Railway
+
+Jesse is designed to run as a worker service on [Railway](https://railway.app) for continuous forward testing.
+
+### 1. Create a Railway project
+
+- Link your GitHub repository in the Railway dashboard.
+- Railway auto-detects `railway.toml` and `Procfile`.
+
+### 2. Add a persistent volume
+
+Mount a volume at `/data` in the Railway service settings. This stores the SQLite database and Parquet cache across restarts and redeploys.
+
+### 3. Set environment variables
+
+Set these in the Railway dashboard under your service's **Variables** tab:
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `EXCHANGE` | No | Exchange name (`binance`, `bybit`, `hyperliquid`). Default: `binance` |
+| `API_KEY` | Yes | Exchange API key for market data |
+| `API_SECRET` | Yes | Exchange API secret |
+| `SYMBOL` | No | Trading pair. Default: `BTC/USDT:USDT` |
+| `INITIAL_BALANCE` | No | Starting paper balance in USDT. Default: `10000` |
+| `DISCORD_WEBHOOK_URL` | No | Discord webhook for trade alerts |
+| `DATABASE_PATH` | Yes | Set to `/data/trading.db` (volume mount) |
+| `CACHE_PATH` | Yes | Set to `/data/candles/` (volume mount) |
+| `OUTPUT_PATH` | No | Set to `/data/output/` if needed |
+| `LOG_LEVEL` | No | `DEBUG`, `INFO`, `WARNING`, `ERROR`. Default: `INFO` |
+
+### 4. Deploy
+
+Push to your linked branch. Railway builds and deploys automatically. The `Procfile` starts the forward test worker:
+
+```
+worker: python main.py forward-test --strategy MACrossover
+```
+
+To use a different strategy, update the `Procfile` or override the start command in Railway settings.
+
+### 5. Verify
+
+After deployment, check:
+
+- **Railway logs**: Confirm the worker starts and connects to the exchange WebSocket.
+- **Discord**: Look for the strategy startup alert (if webhook is configured).
+- **Restart test**: Restart the service in Railway and verify state is recovered from the volume.
+
+### Changing the strategy
+
+Edit the `Procfile` to point to a different strategy class name:
+
+```
+worker: python main.py forward-test --strategy YourStrategy
+```
+
+The strategy class must exist in the `strategies/` directory.
+
 ## Development
 
 ```bash
