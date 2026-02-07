@@ -246,9 +246,9 @@ class TestForwardTestStartup:
 
         mock_provider.subscribe.assert_awaited_once()
         call_args = mock_provider.subscribe.call_args
-        assert call_args.kwargs.get("timeframes") == ["1m"] or call_args[1].get(
-            "timeframes"
-        ) == ["1m"]
+        assert call_args.kwargs.get("timeframes") == ["1m"] or call_args[1].get("timeframes") == [
+            "1m"
+        ]
 
     @pytest.mark.asyncio
     async def test_forward_test_uses_paper_executor_balance(self) -> None:
@@ -620,9 +620,7 @@ class TestForwardTestHealthMonitoring:
         )
 
         # Set last candle time to long ago
-        engine._last_candle_time = datetime.now(UTC) - timedelta(
-            minutes=DATA_TIMEOUT_MINUTES + 1
-        )
+        engine._last_candle_time = datetime.now(UTC) - timedelta(minutes=DATA_TIMEOUT_MINUTES + 1)
         engine._shutdown_requested = False
         engine._aggregator = MagicMock()
 

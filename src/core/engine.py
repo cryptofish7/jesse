@@ -400,9 +400,7 @@ class Engine:
                 await self._restore_state()
                 restored_positions = len(self.portfolio.positions)
                 if restored_positions > 0:
-                    logger.info(
-                        "Crash recovery: restored %d open positions", restored_positions
-                    )
+                    logger.info("Crash recovery: restored %d open positions", restored_positions)
 
             # Step 2: Warm up the aggregator with historical data
             self._aggregator = TimeframeAggregator(timeframes=self.strategy.timeframes)
