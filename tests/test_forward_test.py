@@ -10,6 +10,7 @@ Covers:
 from __future__ import annotations
 
 import asyncio
+import contextlib
 from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -17,8 +18,6 @@ import pytest
 
 from src.core.engine import (
     DATA_TIMEOUT_MINUTES,
-    HEALTH_CHECK_INTERVAL_S,
-    STATE_BACKUP_INTERVAL_S,
     Engine,
 )
 from src.core.portfolio import Portfolio
@@ -637,10 +636,8 @@ class TestForwardTestHealthMonitoring:
                 engine._shutdown_requested = True
                 await asyncio.sleep(0.05)
                 task.cancel()
-                try:
+                with contextlib.suppress(asyncio.CancelledError):
                     await task
-                except asyncio.CancelledError:
-                    pass
 
         await _one_iteration()
 
@@ -671,10 +668,8 @@ class TestForwardTestHealthMonitoring:
             engine._shutdown_requested = True
             await asyncio.sleep(0.05)
             task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await task
-            except asyncio.CancelledError:
-                pass
 
         # Should NOT have sent an error alert
         mock_alerter.on_error.assert_not_awaited()

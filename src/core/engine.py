@@ -8,6 +8,7 @@ Supports two modes:
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import csv
 import logging
 import signal
@@ -225,9 +226,7 @@ class Engine:
         self.end = end
 
         initial_balance: float = 10_000.0
-        if isinstance(executor, BacktestExecutor):
-            initial_balance = executor.initial_balance
-        elif isinstance(executor, PaperExecutor):
+        if isinstance(executor, (BacktestExecutor, PaperExecutor)):
             initial_balance = executor.initial_balance
         self.portfolio = Portfolio(initial_balance=initial_balance)
         self._sl_tp_monitor = SLTPMonitor()
@@ -612,10 +611,8 @@ class Engine:
         for task in (self._health_task, self._backup_task):
             if task is not None and not task.done():
                 task.cancel()
-                try:
+                with contextlib.suppress(asyncio.CancelledError):
                     await task
-                except asyncio.CancelledError:
-                    pass
 
         # Save final state
         await self._save_state()
