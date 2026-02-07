@@ -19,6 +19,7 @@ from src.execution.sl_tp import ExitReason, SLTPMonitor
 from src.strategy.base import Strategy
 
 if TYPE_CHECKING:
+    from src.alerts.discord import DiscordAlerter
     from src.persistence.database import Database
 
 logger = logging.getLogger(__name__)
@@ -191,7 +192,7 @@ class Engine:
         strategy: Strategy,
         data_provider: DataProvider,
         executor: Executor,
-        alerter: object | None = None,
+        alerter: DiscordAlerter | None = None,
         persist: bool = False,
         start: datetime | None = None,
         end: datetime | None = None,
@@ -219,9 +220,14 @@ class Engine:
 
     async def run(self) -> BacktestResults | None:
         """Main entry point. Returns BacktestResults for backtest, None for forward test."""
-        if isinstance(self.executor, BacktestExecutor):
-            return await self.run_backtest()
-        raise NotImplementedError("Forward testing is not yet implemented")
+        try:
+            if isinstance(self.executor, BacktestExecutor):
+                return await self.run_backtest()
+            raise NotImplementedError("Forward testing is not yet implemented")
+        except Exception as exc:
+            if self.alerter is not None:
+                await self.alerter.on_error(f"{type(exc).__name__}: {exc}")
+            raise
 
     async def run_backtest(self) -> BacktestResults:
         """Run a complete backtest over historical data.
@@ -239,6 +245,10 @@ class Engine:
             raise ValueError("start and end must be set for backtest mode")
 
         logger.info("Starting backtest: %s from %s to %s", symbol, self.start, self.end)
+
+        if self.alerter is not None:
+            strategy_name = type(self.strategy).__name__
+            await self.alerter.on_strategy_start(strategy_name)
 
         if self._db is not None:
             await self._db.initialize()
@@ -384,6 +394,8 @@ class Engine:
                 if self._db is not None:
                     await self._db.delete_position(position.id)
                     await self._db.save_trade(trade)
+                if self.alerter is not None:
+                    await self.alerter.on_trade_close(trade)
                 logger.debug(
                     "Position %s closed by %s at %.2f (PnL: %.2f)",
                     position.id,
@@ -408,6 +420,8 @@ class Engine:
             self.portfolio.open_position(result)
             if self._db is not None:
                 await self._db.save_position(result)
+            if self.alerter is not None:
+                await self.alerter.on_trade_open(result)
             logger.debug(
                 "Opened %s position %s at %.2f (size: $%.2f)",
                 result.side,
@@ -420,6 +434,8 @@ class Engine:
             if self._db is not None:
                 await self._db.delete_position(result.id)
                 await self._db.save_trade(result)
+            if self.alerter is not None:
+                await self.alerter.on_trade_close(result)
             logger.debug(
                 "Closed position %s by signal at %.2f (PnL: %.2f)",
                 result.id,
