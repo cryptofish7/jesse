@@ -18,6 +18,8 @@ This file provides context for Claude Code sessions working on this project.
 
 ### During Development — Orchestrator Pattern
 
+If you were spawned as a Task Runner by an orchestrator (like Ralph), follow the Pipeline section of your prompt instead of this workflow.
+
 **You are the orchestrator.** Your role is to coordinate subagents, verify results, and make decisions. Do NOT write implementation code directly. All code generation of more than ~10 lines goes to a subagent via the Task tool. This preserves your context window for coordination across the full task lifecycle.
 
 **Subagent roster:**
@@ -31,8 +33,8 @@ This file provides context for Claude Code sessions working on this project.
 
 **Development flow:**
 
-1. **Plan**: Use the Task tool to spawn an Explore subagent. Pass it the task description, file structure, and relevant docs. It reads code and returns an implementation plan. Present the plan to the user for approval.
-2. **Implement**: After approval, use the Task tool to spawn an implementation subagent. Pass it the full approved plan and CLAUDE.md conventions. The subagent writes all code and tests.
+1. **Plan**: Use the Task tool to spawn an Explore subagent. Pass it the task description, file structure, and relevant docs. It reads code and returns an implementation plan. Review the plan yourself — check for completeness, gaps, and alignment with the task. If it's lacking, re-plan with more specific instructions. Do not ask the user to approve the plan.
+2. **Implement**: Once the plan looks solid, use the Task tool to spawn an implementation subagent. Pass it the full approved plan and CLAUDE.md conventions. The subagent writes all code and tests.
 3. **Verify**: After the subagent completes, run the full verify suite (lint, format, typecheck, test). If verification fails, spawn the `debugger` agent for test failures or a Task subagent for lint/type errors.
 4. When stuck or going in circles, stop. Re-plan before continuing.
 
@@ -41,7 +43,7 @@ This file provides context for Claude Code sessions working on this project.
 - Running commands (tests, linters, CI checks)
 - Trivial fixes (1-2 lines: typo, import, format issue)
 - Task tracker updates
-- Skill invocations (`/docs-consolidator`, `/ci-cd-pipeline`, `/smoke-test`)
+- Spawning audit subagents (docs, CI/CD, smoke test) — see Step 2 of the post-task pipeline
 
 **Verification protocol**: After any subagent writes code, the orchestrator runs the full verify suite before proceeding. Never trust subagent output without verification.
 
@@ -55,12 +57,13 @@ Run this pipeline after every completed task. No user input required unless a st
 Run the project's linting, formatting, type checking, and test commands. Check the Commands section of this file or `pyproject.toml`/`package.json`/`Makefile` for the exact commands. Fix any failures before proceeding.
 
 **Step 2: Audit docs, CI/CD, and deploy script (parallel).**
-Run these concurrently — they are independent:
-- `/docs-consolidator` — audit and sync project docs
-- `/ci-cd-pipeline` — ensure GitHub Actions matches current state
-- `/smoke-test` — update deploy.sh with smoke tests for any new functionality
+Spawn these as **parallel Task subagents** (`subagent_type=general-purpose`). Each subagent gets the relevant skill instructions and an explicit directive: "Execute autonomously. Do not ask the user for approval — review your own plan and proceed."
 
-Skip any if the skill is unavailable. Wait for all to complete before proceeding.
+- **Docs audit**: Pass the docs-consolidator skill instructions. The subagent audits and consolidates project docs.
+- **CI/CD audit**: Pass the ci-cd-pipeline skill instructions. The subagent ensures GitHub Actions matches the current project state.
+- **Smoke test update**: Pass the smoke-test skill instructions. The subagent updates deploy.sh with smoke tests for new functionality.
+
+Skip any if the skill is unavailable. Wait for all subagents to complete before proceeding.
 
 **Step 3: Commit all changes.**
 Stage and commit everything from the task and from Step 2. Write a concise, descriptive commit message. Use conventional commit prefixes when appropriate (`feat:`, `fix:`, `chore:`, `docs:`, `ci:`, `refactor:`, `test:`).
@@ -103,8 +106,8 @@ git checkout main && git pull origin main
   3. Wait for CI again (return to Step 5b). Max 1 retry.
   4. If the conflict persists, stop and ask the user for help.
 
-**Step 7: Clean up the session.**
-Run `/clean` to clear the conversation context. This ensures a fresh start for the next task.
+**Step 7: Conserve context.**
+Keep context lean by delegating implementation to Task subagents rather than writing code directly. If running as a Task Runner, report your result and exit.
 
 ### After Making a Mistake
 
@@ -301,6 +304,7 @@ engine.run()  # Runs forever
 - Always use timezone-aware datetimes (`timezone.utc`) — Parquet strips timezone info, so re-add it when reading back.
 - Don't use `== 0.0` for float sentinel checks — use `None` sentinel instead to avoid ambiguity with legitimate zero values.
 - Always run the planning subagent before implementing a task — even when the scope seems obvious. The planner catches bugs, edge cases, and design issues that are easy to miss when jumping straight to code.
+- Always run `/clean` (Step 7) after merging a PR before starting the next milestone — skipping it wastes context window on stale state from the previous task.
 
 <!--
 Format: "Don't X — do Y instead" or "Always X before Y"

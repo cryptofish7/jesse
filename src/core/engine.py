@@ -1,11 +1,19 @@
-"""Backtest engine — orchestrates data, strategy, execution, and portfolio."""
+"""Trading engine — orchestrates data, strategy, execution, and portfolio.
+
+Supports two modes:
+- **Backtest**: replay historical candles via ``run_backtest()``.
+- **Forward test**: stream real-time candles via ``run_forward_test()``.
+"""
 
 from __future__ import annotations
 
+import asyncio
+import contextlib
 import csv
 import logging
+import signal
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -15,6 +23,7 @@ from src.core.types import Candle, Position, Signal, Trade
 from src.data.provider import DataProvider
 from src.execution.backtest import BacktestExecutor
 from src.execution.executor import Executor
+from src.execution.paper import PaperExecutor
 from src.execution.sl_tp import ExitReason, SLTPMonitor
 from src.strategy.base import Strategy
 
@@ -23,6 +32,11 @@ if TYPE_CHECKING:
     from src.persistence.database import Database
 
 logger = logging.getLogger(__name__)
+
+# Forward-test health monitoring defaults
+HEALTH_CHECK_INTERVAL_S = 60  # Check health every 60 seconds
+DATA_TIMEOUT_MINUTES = 5  # Alert if no data received for this many minutes
+STATE_BACKUP_INTERVAL_S = 300  # Persist state every 5 minutes
 
 
 # --- Result types ---
@@ -178,9 +192,15 @@ class BacktestResults:
 class Engine:
     """Orchestrates data flow between provider, strategy, executor, and portfolio.
 
-    For backtesting:
+    Supports two modes depending on the executor type:
+
+    **Backtesting** (BacktestExecutor):
         engine = Engine(strategy, data_provider, executor, start=..., end=...)
-        results = await engine.run()
+        results = await engine.run()  # Returns BacktestResults
+
+    **Forward testing** (PaperExecutor):
+        engine = Engine(strategy, live_provider, paper_executor, persist=True)
+        await engine.run()  # Runs until shutdown, returns None
 
     The executor does NOT mutate the portfolio — the engine handles all
     portfolio bookkeeping (open_position, close_position) after receiving
@@ -205,11 +225,18 @@ class Engine:
         self.start = start
         self.end = end
 
-        initial_balance = (
-            executor.initial_balance if isinstance(executor, BacktestExecutor) else 10_000.0
-        )
+        initial_balance: float = 10_000.0
+        if isinstance(executor, (BacktestExecutor, PaperExecutor)):
+            initial_balance = executor.initial_balance
         self.portfolio = Portfolio(initial_balance=initial_balance)
         self._sl_tp_monitor = SLTPMonitor()
+
+        # Forward-test state
+        self._shutdown_requested = False
+        self._aggregator: TimeframeAggregator | None = None
+        self._last_candle_time: datetime | None = None
+        self._health_task: asyncio.Task[None] | None = None
+        self._backup_task: asyncio.Task[None] | None = None
 
         # Persistence — lazy runtime import to avoid circular imports
         self._db: Database | None = None
@@ -223,7 +250,8 @@ class Engine:
         try:
             if isinstance(self.executor, BacktestExecutor):
                 return await self.run_backtest()
-            raise NotImplementedError("Forward testing is not yet implemented")
+            await self.run_forward_test()
+            return None
         except Exception as exc:
             if self.alerter is not None:
                 await self.alerter.on_error(f"{type(exc).__name__}: {exc}")
@@ -341,6 +369,279 @@ class Engine:
         finally:
             if self._db is not None:
                 await self._db.close()
+
+    async def run_forward_test(self) -> None:
+        """Run a forward test with real-time data from the exchange.
+
+        Connects to the live data provider via WebSocket, restores any
+        persisted state for crash recovery, and enters the main event loop.
+        Handles graceful shutdown on SIGINT/SIGTERM.
+
+        Steps:
+        1. Initialize database and restore state (crash recovery).
+        2. Fetch warm-up historical data and initialize the aggregator.
+        3. Send startup alert.
+        4. Install signal handlers for graceful shutdown.
+        5. Start health monitoring and periodic state backup tasks.
+        6. Subscribe to live data (blocks until shutdown or error).
+        7. On exit: save state, close connections, send shutdown alert.
+        """
+        symbol = self._get_symbol()
+        strategy_name = type(self.strategy).__name__
+
+        logger.info("Starting forward test: %s with strategy %s", symbol, strategy_name)
+
+        if self._db is not None:
+            await self._db.initialize()
+
+        try:
+            # Step 1: Restore state for crash recovery
+            if self._db is not None:
+                await self._restore_state()
+                restored_positions = len(self.portfolio.positions)
+                if restored_positions > 0:
+                    logger.info("Crash recovery: restored %d open positions", restored_positions)
+
+            # Step 2: Warm up the aggregator with historical data
+            self._aggregator = TimeframeAggregator(timeframes=self.strategy.timeframes)
+            await self._warm_up_forward_test(symbol)
+
+            # Step 3: Startup alert
+            if self.alerter is not None:
+                await self.alerter.on_strategy_start(strategy_name)
+
+            # Step 4: Install signal handlers for graceful shutdown
+            self._install_signal_handlers()
+
+            # Step 5: Start background tasks
+            self._health_task = asyncio.create_task(self._health_monitor())
+            self._backup_task = asyncio.create_task(self._periodic_state_backup())
+
+            # Step 6: Subscribe to live data — blocks until unsubscribe or error
+            logger.info("Entering forward test main loop (Ctrl+C to stop)...")
+            await self.data_provider.subscribe(
+                symbol=symbol,
+                timeframes=["1m"],  # Engine aggregates higher TFs
+                callback=self._on_live_candle,
+            )
+
+        except asyncio.CancelledError:
+            logger.info("Forward test cancelled")
+        except Exception:
+            logger.exception("Forward test error")
+            raise
+        finally:
+            # Step 7: Cleanup
+            await self._shutdown_forward_test(strategy_name)
+
+    async def _warm_up_forward_test(self, symbol: str) -> None:
+        """Fetch historical candles to warm up the aggregator before live data.
+
+        Uses the warm-up bar count (based on the highest declared timeframe)
+        to determine how much historical data to fetch.
+        """
+        warm_up_bars = self._calculate_warm_up_bars()
+        # Add extra buffer for safety
+        fetch_bars = warm_up_bars + 100
+        end_time = datetime.now(UTC)
+        start_time = end_time - timedelta(minutes=fetch_bars)
+
+        logger.info(
+            "Fetching %d warm-up candles for forward test (%s to %s)",
+            fetch_bars,
+            start_time,
+            end_time,
+        )
+
+        candles_1m = await self.data_provider.get_historical_candles(
+            symbol=symbol, timeframe="1m", start=start_time, end=end_time
+        )
+
+        if not candles_1m:
+            logger.warning("No historical candles for warm-up, starting cold")
+            return
+
+        assert self._aggregator is not None
+        # Feed all but the last candle through warm_up, last through update for on_init
+        if len(candles_1m) > 1:
+            self._aggregator.warm_up(candles_1m[:-1])
+        init_data = self._aggregator.update(candles_1m[-1])
+        self.strategy.on_init(init_data)
+        self._last_candle_time = candles_1m[-1].timestamp
+
+        logger.info("Warm-up complete: %d candles processed", len(candles_1m))
+
+    async def _on_live_candle(self, timeframe: str, candle: Candle) -> None:
+        """Callback invoked by the LiveDataProvider on each closed candle.
+
+        Only processes 1m candles — higher timeframes are aggregated
+        internally by the TimeframeAggregator.
+        """
+        if timeframe != "1m":
+            return
+
+        if self._aggregator is None:
+            logger.warning("Aggregator not initialized, skipping candle")
+            return
+
+        self._last_candle_time = candle.timestamp
+
+        # Update multi-timeframe data
+        mtf_data = self._aggregator.update(candle)
+
+        # Update portfolio with current price
+        self.portfolio.update_price(candle.close)
+
+        # Check SL/TP BEFORE strategy (stops execute before strategy reacts)
+        await self._check_sl_tp(candle)
+
+        # Call strategy
+        signals = self.strategy.on_candle(mtf_data, self.portfolio) or []
+
+        # Execute signals
+        for signal_item in signals:
+            await self._execute_signal(signal_item, candle.close)
+
+        # Persist state after each candle
+        await self._save_state()
+
+        logger.debug(
+            "Processed candle %s: price=%.2f equity=%.2f positions=%d",
+            candle.timestamp,
+            candle.close,
+            self.portfolio.equity,
+            len(self.portfolio.positions),
+        )
+
+    def _install_signal_handlers(self) -> None:
+        """Install SIGINT/SIGTERM handlers for graceful shutdown.
+
+        On non-Unix platforms (Windows), signal handlers in asyncio are not
+        supported, so we fall back silently — KeyboardInterrupt will still
+        trigger cleanup via the try/finally in run_forward_test.
+        """
+        loop = asyncio.get_running_loop()
+        try:
+            for sig in (signal.SIGINT, signal.SIGTERM):
+                loop.add_signal_handler(sig, self._request_shutdown)
+            logger.debug("Signal handlers installed for SIGINT/SIGTERM")
+        except NotImplementedError:
+            # Windows does not support add_signal_handler
+            logger.debug("Signal handlers not supported on this platform")
+
+    def _request_shutdown(self) -> None:
+        """Signal the engine to shut down gracefully.
+
+        Sets the shutdown flag and schedules the data provider unsubscribe
+        as an asyncio task so the subscribe() call in run_forward_test returns.
+        """
+        if self._shutdown_requested:
+            return
+        self._shutdown_requested = True
+        logger.info("Shutdown requested, stopping forward test...")
+        asyncio.create_task(self.data_provider.unsubscribe())
+
+    async def _health_monitor(self) -> None:
+        """Periodic health check — alerts if no data received for too long.
+
+        Runs as a background asyncio task during forward testing. Checks
+        every HEALTH_CHECK_INTERVAL_S seconds whether a candle has been
+        received within the DATA_TIMEOUT_MINUTES window.
+        """
+        try:
+            while not self._shutdown_requested:
+                await asyncio.sleep(HEALTH_CHECK_INTERVAL_S)
+
+                if self._shutdown_requested:
+                    break
+
+                now = datetime.now(UTC)
+
+                if self._last_candle_time is not None:
+                    elapsed = now - self._last_candle_time
+                    timeout = timedelta(minutes=DATA_TIMEOUT_MINUTES)
+
+                    if elapsed > timeout:
+                        msg = (
+                            f"No candle data received for {elapsed.total_seconds() / 60:.1f} "
+                            f"minutes (threshold: {DATA_TIMEOUT_MINUTES}m)"
+                        )
+                        logger.warning(msg)
+                        if self.alerter is not None:
+                            await self.alerter.on_error(msg)
+
+                # Heartbeat log
+                logger.info(
+                    "Heartbeat: equity=%.2f positions=%d last_candle=%s",
+                    self.portfolio.equity,
+                    len(self.portfolio.positions),
+                    self._last_candle_time.isoformat() if self._last_candle_time else "never",
+                )
+        except asyncio.CancelledError:
+            pass
+
+    async def _periodic_state_backup(self) -> None:
+        """Periodically save portfolio and strategy state to the database.
+
+        Runs as a background asyncio task during forward testing. Saves
+        every STATE_BACKUP_INTERVAL_S seconds as a safety net against crashes.
+        """
+        try:
+            while not self._shutdown_requested:
+                await asyncio.sleep(STATE_BACKUP_INTERVAL_S)
+                if self._shutdown_requested:
+                    break
+                await self._save_state()
+                logger.debug("Periodic state backup completed")
+        except asyncio.CancelledError:
+            pass
+
+    async def _shutdown_forward_test(self, strategy_name: str) -> None:
+        """Clean up all forward test resources.
+
+        Called in the finally block of run_forward_test. Cancels background
+        tasks, saves final state, closes database and data provider connections,
+        and sends a shutdown alert.
+        """
+        logger.info("Shutting down forward test...")
+
+        # Cancel background tasks
+        for task in (self._health_task, self._backup_task):
+            if task is not None and not task.done():
+                task.cancel()
+                with contextlib.suppress(asyncio.CancelledError):
+                    await task
+
+        # Save final state
+        await self._save_state()
+
+        # Close data provider
+        try:
+            await self.data_provider.unsubscribe()
+        except Exception:
+            logger.debug("Error unsubscribing data provider (ignored)", exc_info=True)
+
+        # Close database
+        if self._db is not None:
+            await self._db.close()
+
+        # Send shutdown alert
+        if self.alerter is not None:
+            await self.alerter.send_alert(
+                "",
+                embed={
+                    "title": "Forward Test Stopped",
+                    "description": (
+                        f"**{strategy_name}** has been stopped.\n"
+                        f"Equity: ${self.portfolio.equity:,.2f} | "
+                        f"Open positions: {len(self.portfolio.positions)}"
+                    ),
+                    "color": 0xE67E22,  # Orange
+                    "timestamp": datetime.now(UTC).isoformat(),
+                },
+            )
+
+        logger.info("Forward test shutdown complete")
 
     async def _restore_state(self) -> None:
         """Restore portfolio and strategy state from the database.
