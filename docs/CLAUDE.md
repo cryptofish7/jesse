@@ -186,8 +186,8 @@ class Strategy(ABC):
         pass
 
 # Signals
-Signal.open_long(size_percent=1.0, stop_loss=95000, take_profit=105000)
-Signal.open_short(size_percent=1.0, stop_loss=105000, take_profit=95000)
+Signal.open_long(size_percent=0.01, stop_loss=95000, take_profit=105000)
+Signal.open_short(size_percent=0.01, stop_loss=105000, take_profit=95000)
 Signal.close(position_id="...")
 
 # Data access

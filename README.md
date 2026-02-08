@@ -53,11 +53,11 @@ class MyStrategy(Strategy):
 Strategies communicate with the engine through `Signal` objects:
 
 ```python
-# Open a long position (100% of equity, with SL and TP)
-Signal.open_long(size_percent=1.0, stop_loss=95000, take_profit=105000)
+# Open a long position (1% of equity, with SL and TP)
+Signal.open_long(size_percent=0.01, stop_loss=95000, take_profit=105000)
 
 # Open a short position
-Signal.open_short(size_percent=1.0, stop_loss=105000, take_profit=95000)
+Signal.open_short(size_percent=0.01, stop_loss=105000, take_profit=95000)
 
 # Close a specific position
 Signal.close(position_id="abc123")

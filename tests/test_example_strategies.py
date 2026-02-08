@@ -108,6 +108,7 @@ class TestRSIStrategy:
         assert s.period == 14
         assert s.overbought == 70.0
         assert s.oversold == 30.0
+        assert s.risk_percent == 0.01
         assert s.timeframes == ["1m"]
 
     def test_custom_params(self) -> None:
@@ -268,7 +269,7 @@ class TestBreakoutStrategy:
     def test_default_params(self) -> None:
         s = BreakoutStrategy()
         assert s.period == 20
-        assert s.risk_percent == 1.0
+        assert s.risk_percent == 0.01
         assert s.tp_multiplier == 1.5
         assert s.timeframes == ["1m"]
 
@@ -411,6 +412,7 @@ class TestMTFStrategy:
         assert s.trend_period == 50
         assert s.fast_period == 10
         assert s.slow_period == 30
+        assert s.risk_percent == 0.01
         assert s.timeframes == ["1m", "4h"]
 
     def test_custom_params(self) -> None:

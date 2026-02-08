@@ -302,7 +302,7 @@ class TestMACrossover:
         s = MACrossover()
         assert s.fast_period == 10
         assert s.slow_period == 30
-        assert s.risk_percent == 1.0
+        assert s.risk_percent == 0.01
         assert s.timeframes == ["1m"]
 
     def test_custom_params(self) -> None:

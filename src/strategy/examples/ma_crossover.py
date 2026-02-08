@@ -26,7 +26,7 @@ class MACrossover(Strategy):
     Parameters:
         fast_period: Number of candles for the fast MA (default: 10).
         slow_period: Number of candles for the slow MA (default: 30).
-        risk_percent: Position size as % of equity (default: 1.0 = 100%).
+        risk_percent: Position size as % of equity (default: 0.01 = 1%).
         sl_percent: Stop loss distance as % of entry price (default: 2.0).
         tp_percent: Take profit distance as % of entry price (default: 4.0).
     """
@@ -37,7 +37,7 @@ class MACrossover(Strategy):
         self,
         fast_period: int = 10,
         slow_period: int = 30,
-        risk_percent: float = 1.0,
+        risk_percent: float = 0.01,
         sl_percent: float = 2.0,
         tp_percent: float = 4.0,
     ) -> None:

@@ -42,7 +42,7 @@ class BreakoutStrategy(Strategy):
 
     Parameters:
         period: Lookback period for the channel (default: 20).
-        risk_percent: Position size as fraction of equity (default: 1.0 = 100%).
+        risk_percent: Position size as fraction of equity (default: 0.01 = 1%).
         tp_multiplier: Take-profit distance as a multiple of channel width (default: 1.5).
     """
 
@@ -51,7 +51,7 @@ class BreakoutStrategy(Strategy):
     def __init__(
         self,
         period: int = 20,
-        risk_percent: float = 1.0,
+        risk_percent: float = 0.01,
         tp_multiplier: float = 1.5,
     ) -> None:
         self.period = period
