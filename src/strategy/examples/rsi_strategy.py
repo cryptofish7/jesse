@@ -58,7 +58,7 @@ class RSIStrategy(Strategy):
         period: RSI lookback period (default: 14).
         overbought: RSI threshold for short entry (default: 70).
         oversold: RSI threshold for long entry (default: 30).
-        risk_percent: Position size as fraction of equity (default: 1.0 = 100%).
+        risk_percent: Position size as fraction of equity (default: 0.01 = 1%).
         sl_percent: Stop loss distance as % of entry price (default: 2.0).
         tp_percent: Take profit distance as % of entry price (default: 4.0).
     """
@@ -70,7 +70,7 @@ class RSIStrategy(Strategy):
         period: int = 14,
         overbought: float = 70.0,
         oversold: float = 30.0,
-        risk_percent: float = 1.0,
+        risk_percent: float = 0.01,
         sl_percent: float = 2.0,
         tp_percent: float = 4.0,
     ) -> None:

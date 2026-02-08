@@ -47,7 +47,7 @@ class MTFStrategy(Strategy):
         trend_period: SMA period for the 4h trend filter (default: 50).
         fast_period: Fast SMA period on 1m for entry timing (default: 10).
         slow_period: Slow SMA period on 1m for entry timing (default: 30).
-        risk_percent: Position size as fraction of equity (default: 1.0 = 100%).
+        risk_percent: Position size as fraction of equity (default: 0.01 = 1%).
         sl_percent: Stop loss distance as % of entry price (default: 1.5).
         tp_percent: Take profit distance as % of entry price (default: 3.0).
     """
@@ -59,7 +59,7 @@ class MTFStrategy(Strategy):
         trend_period: int = 50,
         fast_period: int = 10,
         slow_period: int = 30,
-        risk_percent: float = 1.0,
+        risk_percent: float = 0.01,
         sl_percent: float = 1.5,
         tp_percent: float = 3.0,
     ) -> None:

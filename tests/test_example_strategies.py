@@ -268,7 +268,7 @@ class TestBreakoutStrategy:
     def test_default_params(self) -> None:
         s = BreakoutStrategy()
         assert s.period == 20
-        assert s.risk_percent == 1.0
+        assert s.risk_percent == 0.01
         assert s.tp_multiplier == 1.5
         assert s.timeframes == ["1m"]
 
