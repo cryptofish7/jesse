@@ -95,7 +95,7 @@ Jesse is a Python-based trading system for backtesting and forward testing perpe
 class MyStrategy(Strategy):
     timeframes = ['1m', '4h']  # Declare what you need
 
-    def __init__(self, orderblock_lookback: int = 20, risk_percent: float = 1.0):
+    def __init__(self, orderblock_lookback: int = 20, risk_percent: float = 0.01):
         self.orderblock_lookback = orderblock_lookback
         self.risk_percent = risk_percent
 
