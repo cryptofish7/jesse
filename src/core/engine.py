@@ -646,28 +646,31 @@ class Engine:
 
         # Send shutdown / completion alert
         if self.alerter is not None:
-            if self._duration_expired and self._duration_seconds is not None:
-                await self.alerter.on_forward_test_complete(
-                    strategy_name=strategy_name,
-                    duration_str=self._format_duration(self._duration_seconds),
-                    initial_balance=self.portfolio.initial_balance,
-                    final_equity=self.portfolio.equity,
-                    trades=list(self.portfolio.trades),
-                )
-            else:
-                await self.alerter.send_alert(
-                    "",
-                    embed={
-                        "title": "Forward Test Stopped",
-                        "description": (
-                            f"**{strategy_name}** has been stopped.\n"
-                            f"Equity: ${self.portfolio.equity:,.2f} | "
-                            f"Open positions: {len(self.portfolio.positions)}"
-                        ),
-                        "color": 0xE67E22,  # Orange
-                        "timestamp": datetime.now(UTC).isoformat(),
-                    },
-                )
+            try:
+                if self._duration_expired and self._duration_seconds is not None:
+                    await self.alerter.on_forward_test_complete(
+                        strategy_name=strategy_name,
+                        duration_str=self._format_duration(self._duration_seconds),
+                        initial_balance=self.portfolio.initial_balance,
+                        final_equity=self.portfolio.equity,
+                        trades=list(self.portfolio.trades),
+                    )
+                else:
+                    await self.alerter.send_alert(
+                        "",
+                        embed={
+                            "title": "Forward Test Stopped",
+                            "description": (
+                                f"**{strategy_name}** has been stopped.\n"
+                                f"Equity: ${self.portfolio.equity:,.2f} | "
+                                f"Open positions: {len(self.portfolio.positions)}"
+                            ),
+                            "color": 0xE67E22,  # Orange
+                            "timestamp": datetime.now(UTC).isoformat(),
+                        },
+                    )
+            except Exception:
+                logger.error("Failed to send shutdown alert", exc_info=True)
 
         logger.info("Forward test shutdown complete")
 
