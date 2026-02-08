@@ -4,6 +4,7 @@ Each doc has ONE purpose. Information belongs in the doc that owns that domain.
 
 | File | Purpose | Owns |
 |------|---------|------|
+| `README.md` | Public-facing project overview: quick start, CLI usage, config table, deployment guide | Quick start, CLI examples, config reference, deployment steps, project structure overview |
 | `docs/CLAUDE.md` | Orientation for Claude Code sessions: conventions, commands, gotchas, quick-reference | Session workflow, quality standards, commands, principles, common tasks, mistakes to avoid |
 | `docs/PRD.md` | Product requirements: user stories, feature specs, business rules | Requirements (functional IDs), user stories, success criteria, non-goals, glossary |
 | `docs/ARCHITECTURE.md` | System design: components, data flow, storage, concurrency, deployment | Component interfaces, data flow diagrams, concurrency model, error handling, schemas, config, deployment, dependencies, file structure, testing strategy |

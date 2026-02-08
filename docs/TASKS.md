@@ -559,6 +559,20 @@ See `PRD.md` Section 6 for the full list of post-v1 enhancements.
 
 ---
 
+## Milestone 17: Forward Test Duration Limit
+
+**Goal:** Allow forward tests to auto-stop after a configured duration, send a performance summary, and stop consuming Railway credits.
+
+- [x] Add `FORWARD_TEST_DURATION` config field with duration string parsing
+- [x] Add `--duration` CLI argument to `forward-test` command
+- [x] Add duration monitor task to Engine with graceful shutdown on expiry
+- [x] Add `on_forward_test_complete()` Discord alert with performance summary
+- [x] Change Railway restart policy to `on-failure`
+- [x] Update `.env.example` with new config
+- [x] Write tests for duration expiry, summary alert, and clean shutdown
+
+---
+
 ## Progress Summary
 
 | Milestone | Status | Tasks |
@@ -579,5 +593,6 @@ See `PRD.md` Section 6 for the full list of post-v1 enhancements.
 | 14. Deployment | Complete | 5/5 |
 | 15. Documentation & Polish | Complete | 5/5 |
 | 16. Future Enhancements | Backlog | — |
+| 17. Forward Test Duration Limit | Complete | 7/7 |
 
-**Total: 62/62 tasks complete**
+**Total: 69/69 tasks complete**

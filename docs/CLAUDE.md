@@ -59,9 +59,9 @@ Run the project's linting, formatting, type checking, and test commands. Check t
 **Step 2: Audit docs, CI/CD, and deploy script (parallel).**
 Spawn these as **parallel Task subagents** (`subagent_type=general-purpose`). Each subagent gets the relevant skill instructions and an explicit directive: "Execute autonomously. Do not ask the user for approval — review your own plan and proceed."
 
-- **Docs audit**: Pass the docs-consolidator skill instructions. The subagent audits and consolidates project docs.
-- **CI/CD audit**: Pass the ci-cd-pipeline skill instructions. The subagent ensures GitHub Actions matches the current project state.
-- **Smoke test update**: Pass the smoke-test skill instructions. The subagent updates deploy.sh with smoke tests for new functionality.
+- **Docs audit**: Read `~/.claude/skills/docs-consolidator/SKILL.md` and pass its contents. The subagent audits and consolidates project docs.
+- **CI/CD audit**: Read `~/.claude/skills/ci-cd-pipeline/SKILL.md` and pass its contents. The subagent ensures GitHub Actions matches the current project state.
+- **Smoke test update**: Read `~/.claude/skills/smoke-test/SKILL.md` and pass its contents. The subagent updates deploy.sh with smoke tests for new functionality.
 
 Skip any if the skill is unavailable. Wait for all subagents to complete before proceeding.
 
@@ -290,9 +290,10 @@ engine = Engine(
     data_provider=LiveDataProvider(symbol="BTC/USDT:USDT"),
     executor=PaperExecutor(initial_balance=10000),
     alerter=DiscordAlerter(webhook_url="..."),
-    persist=True
+    persist=True,
+    duration_seconds=172800,  # Optional: auto-stop after 48h
 )
-engine.run()  # Runs forever
+engine.run()  # Runs until duration or Ctrl+C
 ```
 
 ---

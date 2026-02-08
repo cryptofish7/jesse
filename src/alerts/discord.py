@@ -181,6 +181,39 @@ class DiscordAlerter:
         }
         await self.send_alert("", embed=embed)
 
+    async def on_forward_test_complete(
+        self,
+        strategy_name: str,
+        duration_str: str,
+        initial_balance: float,
+        final_equity: float,
+        trades: list[Trade],
+    ) -> None:
+        """Alert when a forward test completes its duration limit with a performance summary."""
+        from src.analysis.metrics import calculate_profit_factor, calculate_total_return, calculate_win_rate
+
+        total_return = calculate_total_return(initial_balance, final_equity)
+        win_rate = calculate_win_rate(trades)
+        profit_factor = calculate_profit_factor(trades)
+        pf_str = f"{profit_factor:.2f}" if profit_factor != float("inf") else "\u221e"
+
+        embed = {
+            "title": "Forward Test Complete",
+            "description": f"**{strategy_name}** duration limit reached ({duration_str})",
+            "color": COLOR_BLUE,
+            "fields": [
+                {"name": "Duration", "value": duration_str, "inline": True},
+                {"name": "Initial Balance", "value": f"${initial_balance:,.2f}", "inline": True},
+                {"name": "Final Equity", "value": f"${final_equity:,.2f}", "inline": True},
+                {"name": "Total Return", "value": f"{total_return:+.2%}", "inline": True},
+                {"name": "Trades", "value": str(len(trades)), "inline": True},
+                {"name": "Win Rate", "value": f"{win_rate:.1%}", "inline": True},
+                {"name": "Profit Factor", "value": pf_str, "inline": True},
+            ],
+            "timestamp": datetime.now(UTC).isoformat(),
+        }
+        await self.send_alert("", embed=embed)
+
     # --- Private helpers ---
 
     @staticmethod

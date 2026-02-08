@@ -9,7 +9,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import httpx
 import pytest
 
-from src.alerts.discord import COLOR_BLUE, COLOR_GREEN, COLOR_RED, DiscordAlerter
+from src.alerts.discord import COLOR_BLUE, COLOR_GREEN, COLOR_ORANGE, COLOR_RED, DiscordAlerter
 from src.core.types import Position, Trade
 
 # --- Helpers ---
@@ -517,3 +517,89 @@ class TestEngineAlerterIntegration:
 
         result = await engine.run_backtest()
         assert result is not None  # should return empty BacktestResults
+
+
+# --- TestOnForwardTestComplete ---
+
+
+class TestOnForwardTestComplete:
+    """Tests for on_forward_test_complete formatting."""
+
+    def setup_method(self) -> None:
+        self.alerter = DiscordAlerter(WEBHOOK_URL)
+        self.alerter._client = MagicMock(spec=httpx.AsyncClient)
+        self.mock_post = AsyncMock(return_value=_mock_response(204))
+        self.alerter._client.post = self.mock_post
+
+    @pytest.mark.asyncio
+    async def test_complete_embed_structure(self) -> None:
+        """Verify the embed has the correct title, fields, and color."""
+        trades = [
+            _trade(pnl=100.0, pnl_percent=10.0, exit_reason="take_profit"),
+            _trade(id_="trade-002", pnl=-30.0, pnl_percent=-3.0, exit_reason="stop_loss"),
+        ]
+        await self.alerter.on_forward_test_complete(
+            strategy_name="MACrossover",
+            duration_str="2d",
+            initial_balance=10_000.0,
+            final_equity=10_070.0,
+            trades=trades,
+        )
+
+        call_kwargs = self.mock_post.call_args
+        payload = call_kwargs.kwargs.get("json") or call_kwargs[1]["json"]
+        embed = payload["embeds"][0]
+
+        assert embed["title"] == "Forward Test Complete"
+        assert "MACrossover" in embed["description"]
+        assert "2d" in embed["description"]
+        assert embed["color"] == COLOR_BLUE
+        assert "timestamp" in embed
+
+        fields = {f["name"]: f["value"] for f in embed["fields"]}
+        assert fields["Duration"] == "2d"
+        assert fields["Initial Balance"] == "$10,000.00"
+        assert fields["Final Equity"] == "$10,070.00"
+        assert fields["Trades"] == "2"
+        assert "+0.70%" in fields["Total Return"]
+        assert "50.0%" in fields["Win Rate"]
+
+    @pytest.mark.asyncio
+    async def test_complete_embed_no_trades(self) -> None:
+        """Verify the embed handles zero trades gracefully."""
+        await self.alerter.on_forward_test_complete(
+            strategy_name="TestStrategy",
+            duration_str="1h",
+            initial_balance=10_000.0,
+            final_equity=10_000.0,
+            trades=[],
+        )
+
+        call_kwargs = self.mock_post.call_args
+        payload = call_kwargs.kwargs.get("json") or call_kwargs[1]["json"]
+        embed = payload["embeds"][0]
+
+        fields = {f["name"]: f["value"] for f in embed["fields"]}
+        assert fields["Trades"] == "0"
+        assert fields["Win Rate"] == "0.0%"
+
+    @pytest.mark.asyncio
+    async def test_complete_embed_infinite_profit_factor(self) -> None:
+        """Verify infinity symbol when there are no losing trades."""
+        trades = [
+            _trade(pnl=100.0, pnl_percent=10.0, exit_reason="take_profit"),
+        ]
+        await self.alerter.on_forward_test_complete(
+            strategy_name="WinnerStrategy",
+            duration_str="48h",
+            initial_balance=10_000.0,
+            final_equity=10_100.0,
+            trades=trades,
+        )
+
+        call_kwargs = self.mock_post.call_args
+        payload = call_kwargs.kwargs.get("json") or call_kwargs[1]["json"]
+        embed = payload["embeds"][0]
+
+        fields = {f["name"]: f["value"] for f in embed["fields"]}
+        assert fields["Profit Factor"] == "\u221e"

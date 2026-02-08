@@ -693,3 +693,160 @@ class TestForwardTestRunDispatch:
         assert result is None
         # subscribe should have been called (meaning forward test ran)
         mock_provider.subscribe.assert_awaited_once()
+
+
+class TestForwardTestDurationLimit:
+    """Verify forward test duration limit behavior."""
+
+    @pytest.mark.asyncio
+    async def test_duration_monitor_triggers_shutdown(self) -> None:
+        """Engine with duration_seconds should auto-stop after the duration."""
+        mock_provider = _make_mock_live_provider()
+
+        # Make subscribe block until unsubscribe is called
+        unsubscribe_event = asyncio.Event()
+
+        async def _blocking_subscribe(symbol, timeframes, callback):  # type: ignore[no-untyped-def]
+            await unsubscribe_event.wait()
+
+        async def _unsubscribe() -> None:
+            unsubscribe_event.set()
+
+        mock_provider.subscribe = AsyncMock(side_effect=_blocking_subscribe)
+        mock_provider.unsubscribe = AsyncMock(side_effect=_unsubscribe)
+
+        engine = Engine(
+            strategy=_NoOpStrategy(),
+            data_provider=mock_provider,
+            executor=PaperExecutor(initial_balance=10_000.0),
+            duration_seconds=1,
+        )
+
+        # Should complete within a few seconds (duration timer triggers shutdown)
+        await asyncio.wait_for(engine.run_forward_test(), timeout=10.0)
+
+        assert engine._duration_expired is True
+
+    @pytest.mark.asyncio
+    async def test_duration_expired_sends_complete_alert(self) -> None:
+        """When duration expires, on_forward_test_complete should be called."""
+        mock_provider = _make_mock_live_provider()
+        mock_alerter = AsyncMock()
+
+        unsubscribe_event = asyncio.Event()
+
+        async def _blocking_subscribe(symbol, timeframes, callback):  # type: ignore[no-untyped-def]
+            await unsubscribe_event.wait()
+
+        async def _unsubscribe() -> None:
+            unsubscribe_event.set()
+
+        mock_provider.subscribe = AsyncMock(side_effect=_blocking_subscribe)
+        mock_provider.unsubscribe = AsyncMock(side_effect=_unsubscribe)
+
+        engine = Engine(
+            strategy=_NoOpStrategy(),
+            data_provider=mock_provider,
+            executor=PaperExecutor(initial_balance=10_000.0),
+            alerter=mock_alerter,
+            duration_seconds=1,
+        )
+
+        await asyncio.wait_for(engine.run_forward_test(), timeout=10.0)
+
+        mock_alerter.on_forward_test_complete.assert_awaited_once()
+        call_kwargs = mock_alerter.on_forward_test_complete.call_args.kwargs
+        assert call_kwargs["strategy_name"] == "_NoOpStrategy"
+        assert call_kwargs["initial_balance"] == 10_000.0
+
+    @pytest.mark.asyncio
+    async def test_no_duration_runs_without_timer(self) -> None:
+        """Engine with duration_seconds=None should not create a duration task."""
+        mock_provider = _make_mock_live_provider()
+
+        engine = Engine(
+            strategy=_NoOpStrategy(),
+            data_provider=mock_provider,
+            executor=PaperExecutor(initial_balance=10_000.0),
+            duration_seconds=None,
+        )
+
+        await engine.run_forward_test()
+
+        assert engine._duration_task is None
+
+
+class TestParseDuration:
+    """Tests for parse_duration()."""
+
+    def test_minutes(self) -> None:
+        from src.config import parse_duration
+
+        assert parse_duration("30m") == 1800
+
+    def test_hours(self) -> None:
+        from src.config import parse_duration
+
+        assert parse_duration("48h") == 172800
+
+    def test_days(self) -> None:
+        from src.config import parse_duration
+
+        assert parse_duration("7d") == 604800
+
+    def test_one_day(self) -> None:
+        from src.config import parse_duration
+
+        assert parse_duration("1d") == 86400
+
+    def test_invalid_no_unit(self) -> None:
+        from src.config import parse_duration
+
+        with pytest.raises(ValueError):
+            parse_duration("30")
+
+    def test_invalid_alpha(self) -> None:
+        from src.config import parse_duration
+
+        with pytest.raises(ValueError):
+            parse_duration("abc")
+
+    def test_invalid_unit(self) -> None:
+        from src.config import parse_duration
+
+        with pytest.raises(ValueError):
+            parse_duration("30x")
+
+    def test_empty_string(self) -> None:
+        from src.config import parse_duration
+
+        with pytest.raises(ValueError):
+            parse_duration("")
+
+    def test_negative_value(self) -> None:
+        from src.config import parse_duration
+
+        with pytest.raises(ValueError):
+            parse_duration("-5m")
+
+
+class TestFormatDuration:
+    """Tests for Engine._format_duration()."""
+
+    def test_one_day(self) -> None:
+        assert Engine._format_duration(86400) == "1d"
+
+    def test_two_days(self) -> None:
+        assert Engine._format_duration(172800) == "2d"
+
+    def test_one_hour(self) -> None:
+        assert Engine._format_duration(3600) == "1h"
+
+    def test_one_hour_thirty_minutes(self) -> None:
+        assert Engine._format_duration(5400) == "1h 30m"
+
+    def test_one_minute(self) -> None:
+        assert Engine._format_duration(90) == "1m"
+
+    def test_seconds_only(self) -> None:
+        assert Engine._format_duration(30) == "30s"

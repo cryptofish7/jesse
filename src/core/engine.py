@@ -216,6 +216,7 @@ class Engine:
         persist: bool = False,
         start: datetime | None = None,
         end: datetime | None = None,
+        duration_seconds: int | None = None,
     ) -> None:
         self.strategy = strategy
         self.data_provider = data_provider
@@ -237,6 +238,11 @@ class Engine:
         self._last_candle_time: datetime | None = None
         self._health_task: asyncio.Task[None] | None = None
         self._backup_task: asyncio.Task[None] | None = None
+
+        # Duration limit
+        self._duration_seconds = duration_seconds
+        self._duration_expired = False
+        self._duration_task: asyncio.Task[None] | None = None
 
         # Persistence — lazy runtime import to avoid circular imports
         self._db: Database | None = None
@@ -416,6 +422,8 @@ class Engine:
             # Step 5: Start background tasks
             self._health_task = asyncio.create_task(self._health_monitor())
             self._backup_task = asyncio.create_task(self._periodic_state_backup())
+            if self._duration_seconds is not None:
+                self._duration_task = asyncio.create_task(self._duration_monitor())
 
             # Step 6: Subscribe to live data — blocks until unsubscribe or error
             logger.info("Entering forward test main loop (Ctrl+C to stop)...")
@@ -596,6 +604,17 @@ class Engine:
         except asyncio.CancelledError:
             pass
 
+    async def _duration_monitor(self) -> None:
+        """Sleep for the configured duration, then trigger shutdown."""
+        assert self._duration_seconds is not None
+        try:
+            await asyncio.sleep(self._duration_seconds)
+            logger.info("Forward test duration limit reached (%d seconds)", self._duration_seconds)
+            self._duration_expired = True
+            self._request_shutdown()
+        except asyncio.CancelledError:
+            pass
+
     async def _shutdown_forward_test(self, strategy_name: str) -> None:
         """Clean up all forward test resources.
 
@@ -606,7 +625,7 @@ class Engine:
         logger.info("Shutting down forward test...")
 
         # Cancel background tasks
-        for task in (self._health_task, self._backup_task):
+        for task in (self._health_task, self._backup_task, self._duration_task):
             if task is not None and not task.done():
                 task.cancel()
                 with contextlib.suppress(asyncio.CancelledError):
@@ -625,21 +644,30 @@ class Engine:
         if self._db is not None:
             await self._db.close()
 
-        # Send shutdown alert
+        # Send shutdown / completion alert
         if self.alerter is not None:
-            await self.alerter.send_alert(
-                "",
-                embed={
-                    "title": "Forward Test Stopped",
-                    "description": (
-                        f"**{strategy_name}** has been stopped.\n"
-                        f"Equity: ${self.portfolio.equity:,.2f} | "
-                        f"Open positions: {len(self.portfolio.positions)}"
-                    ),
-                    "color": 0xE67E22,  # Orange
-                    "timestamp": datetime.now(UTC).isoformat(),
-                },
-            )
+            if self._duration_expired and self._duration_seconds is not None:
+                await self.alerter.on_forward_test_complete(
+                    strategy_name=strategy_name,
+                    duration_str=self._format_duration(self._duration_seconds),
+                    initial_balance=self.portfolio.initial_balance,
+                    final_equity=self.portfolio.equity,
+                    trades=list(self.portfolio.trades),
+                )
+            else:
+                await self.alerter.send_alert(
+                    "",
+                    embed={
+                        "title": "Forward Test Stopped",
+                        "description": (
+                            f"**{strategy_name}** has been stopped.\n"
+                            f"Equity: ${self.portfolio.equity:,.2f} | "
+                            f"Open positions: {len(self.portfolio.positions)}"
+                        ),
+                        "color": 0xE67E22,  # Orange
+                        "timestamp": datetime.now(UTC).isoformat(),
+                    },
+                )
 
         logger.info("Forward test shutdown complete")
 
@@ -782,3 +810,35 @@ class Engine:
         """Calculate warm-up period: enough for 1 candle of the highest declared TF."""
         max_minutes = max(get_timeframe_minutes(tf) for tf in self.strategy.timeframes)
         return max(max_minutes, 100)
+
+    @staticmethod
+    def _format_duration(seconds: int) -> str:
+        """Format seconds as a human-readable duration string.
+
+        Examples::
+
+            _format_duration(86400)   # "1d"
+            _format_duration(172800)  # "2d"
+            _format_duration(3600)    # "1h"
+            _format_duration(5400)    # "1h 30m"
+            _format_duration(90)      # "1m"
+            _format_duration(30)      # "30s"
+        """
+        parts: list[str] = []
+        days = seconds // 86400
+        remaining = seconds % 86400
+        hours = remaining // 3600
+        remaining = remaining % 3600
+        minutes = remaining // 60
+        remaining_s = remaining % 60
+
+        if days > 0:
+            parts.append(f"{days}d")
+        if hours > 0:
+            parts.append(f"{hours}h")
+        if minutes > 0:
+            parts.append(f"{minutes}m")
+        if not parts:
+            parts.append(f"{remaining_s}s")
+
+        return " ".join(parts)
