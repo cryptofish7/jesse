@@ -157,6 +157,7 @@ class Engine:
         persist: bool = False,
         start: datetime | None = None,
         end: datetime | None = None,
+        duration_seconds: int | None = None,
     ):
         self.strategy = strategy
         self.data_provider = data_provider
@@ -168,7 +169,7 @@ class Engine:
         self.portfolio = Portfolio(initial_balance=executor.initial_balance)
 
     async def run(self) -> BacktestResults | None:
-        """Main entry point. Returns results for backtest, runs forever for live."""
+        """Main entry point. Returns results for backtest, runs forever (or until duration) for live."""
         pass
 
     async def _check_sl_tp(self, candle: Candle) -> None:
@@ -434,6 +435,13 @@ class DiscordAlerter:
             f"Entry: ${trade.entry_price:,.2f} → Exit: ${trade.exit_price:,.2f}\n"
             f"PnL: ${trade.pnl:,.2f} ({trade.pnl_percent:+.2f}%)"
         )
+
+    async def on_forward_test_complete(
+        self, strategy_name: str, duration_str: str,
+        initial_balance: float, final_equity: float, trades: list[Trade],
+    ) -> None:
+        """Alert with performance summary when forward test duration expires."""
+        ...
 ```
 
 ---
@@ -654,7 +662,8 @@ Main Event Loop
 │
 └── Periodic Tasks
     ├── Heartbeat / connection health check
-    └── State backup (every N minutes)
+    ├── State backup (every N minutes)
+    └── Duration monitor (triggers shutdown after configured limit)
 ```
 
 ### 6.3 Backtest Optimization
@@ -746,6 +755,9 @@ OUTPUT_PATH=output/
 
 # Logging
 LOG_LEVEL=INFO
+
+# Forward test duration limit (e.g. 48h, 7d, 30m). Leave empty for unlimited.
+FORWARD_TEST_DURATION=
 ```
 
 ### 8.2 Config Schema (Pydantic v2)
@@ -773,6 +785,9 @@ class Settings(BaseSettings):
     output_path: str = "output/"
 
     log_level: str = "INFO"
+
+    # Forward test duration limit (e.g. "48h", "7d", "30m"). None = unlimited.
+    forward_test_duration: str | None = None
 
     # History defaults
     default_history_candles: int = 525600  # ~1 year of 1m candles
@@ -916,7 +931,7 @@ dev = [
 builder = "nixpacks"
 
 [deploy]
-restartPolicyType = "always"
+restartPolicyType = "on-failure"
 restartPolicyMaxRetries = 3
 ```
 
@@ -944,6 +959,7 @@ Set in Railway dashboard:
 - `SYMBOL`
 - `INITIAL_BALANCE`
 - `DISCORD_WEBHOOK_URL`
+- `FORWARD_TEST_DURATION` (optional — e.g. `48h`, `7d`)
 - `LOG_LEVEL`
 
 ---

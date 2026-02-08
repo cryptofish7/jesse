@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import re
 import sys
 from typing import Literal
 
@@ -38,6 +39,9 @@ class Settings(BaseSettings):
 
     # Logging
     log_level: str = "INFO"
+
+    # Forward test duration limit (e.g. "48h", "7d", "30m"). None = unlimited.
+    forward_test_duration: str | None = None
 
     # History defaults
     default_history_candles: int = 525600  # ~1 year of 1m candles
@@ -88,6 +92,36 @@ def setup_logging(level: str = "INFO") -> None:
         root_logger.addHandler(file_handler)
     except OSError:
         pass
+
+
+_DURATION_RE = re.compile(r"^(\d+)([mhd])$")
+
+
+def parse_duration(s: str) -> int:
+    """Parse a duration string into seconds.
+
+    Supported suffixes: ``m`` (minutes), ``h`` (hours), ``d`` (days).
+
+    Examples::
+
+        parse_duration("30m")  # 1800
+        parse_duration("48h")  # 172800
+        parse_duration("7d")   # 604800
+
+    Raises:
+        ValueError: If the string is empty or has an invalid format.
+    """
+    if not s:
+        raise ValueError(f"Invalid duration: '{s}'. Expected format like '30m', '48h', or '7d'.")
+    match = _DURATION_RE.match(s.strip())
+    if match is None:
+        raise ValueError(f"Invalid duration: '{s}'. Expected format like '30m', '48h', or '7d'.")
+    value = int(match.group(1))
+    if value <= 0:
+        raise ValueError(f"Invalid duration: '{s}'. Value must be positive.")
+    unit = match.group(2)
+    multipliers = {"m": 60, "h": 3600, "d": 86400}
+    return value * multipliers[unit]
 
 
 # Module-level singleton

@@ -156,6 +156,7 @@ Copy `.env.example` to `.env` and set:
 | `DISCORD_WEBHOOK_URL` | Discord alerts webhook | — |
 | `DATABASE_PATH` | SQLite database path | `data/trading.db` |
 | `CACHE_PATH` | Parquet cache directory | `data/candles/` |
+| `FORWARD_TEST_DURATION` | Duration limit for forward tests (e.g. `48h`, `7d`) | — (unlimited) |
 | `LOG_LEVEL` | Logging level | `INFO` |
 
 ## CLI Usage
@@ -172,6 +173,9 @@ python main.py backtest --strategy MACrossover --start 2024-01-01 --end 2024-12-
 
 # Run forward testing (paper trading, runs continuously)
 python main.py forward-test --strategy MACrossover
+
+# Run forward testing with a duration limit (auto-stops and sends summary)
+python main.py forward-test --strategy MACrossover --duration 48h
 ```
 
 Backtest output includes a results summary, equity curve chart (HTML), and trades CSV in `output/<strategy>/`.
@@ -242,6 +246,7 @@ Set these in the Railway dashboard under your service's **Variables** tab:
 | `DATABASE_PATH` | Yes | Set to `/data/trading.db` (volume mount) |
 | `CACHE_PATH` | Yes | Set to `/data/candles/` (volume mount) |
 | `OUTPUT_PATH` | No | Set to `/data/output/` if needed |
+| `FORWARD_TEST_DURATION` | No | Duration limit (e.g. `48h`, `7d`). Stops and sends summary when reached |
 | `LOG_LEVEL` | No | `DEBUG`, `INFO`, `WARNING`, `ERROR`. Default: `INFO` |
 
 ### 4. Deploy

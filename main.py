@@ -9,7 +9,7 @@ import sys
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
-from src.config import settings, setup_logging
+from src.config import parse_duration, settings, setup_logging
 
 logger = logging.getLogger(__name__)
 
@@ -111,10 +111,22 @@ async def cmd_forward_test(args: argparse.Namespace) -> None:
         sys.exit(1)
 
     strategy_name = type(strategy).__name__
+
+    # Resolve duration: CLI arg > env var > None (unlimited)
+    duration_str = args.duration or settings.forward_test_duration
+    duration_seconds: int | None = None
+    if duration_str:
+        try:
+            duration_seconds = parse_duration(duration_str)
+        except ValueError as e:
+            print(f"Error: {e}")
+            sys.exit(1)
+
     logger.info(
-        "Starting forward test: strategy=%s, balance=%.2f",
+        "Starting forward test: strategy=%s, balance=%.2f, duration=%s",
         strategy_name,
         args.initial_balance,
+        duration_str or "unlimited",
     )
 
     # Create components
@@ -132,9 +144,12 @@ async def cmd_forward_test(args: argparse.Namespace) -> None:
         executor=executor,
         alerter=alerter,
         persist=True,
+        duration_seconds=duration_seconds,
     )
 
     print(f"Forward test starting: {strategy_name}")
+    if duration_str:
+        print(f"Duration limit: {duration_str}")
     print("Press Ctrl+C to stop.")
 
     try:
@@ -248,6 +263,11 @@ def build_parser() -> argparse.ArgumentParser:
         type=float,
         default=settings.initial_balance,
         help=f"Initial balance in USDT (default: {settings.initial_balance})",
+    )
+    ft.add_argument(
+        "--duration",
+        default=None,
+        help="Duration limit (e.g. 48h, 7d, 30m). Overrides FORWARD_TEST_DURATION env var.",
     )
 
     # fetch-data
