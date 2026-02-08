@@ -190,7 +190,11 @@ class DiscordAlerter:
         trades: list[Trade],
     ) -> None:
         """Alert when a forward test completes its duration limit with a performance summary."""
-        from src.analysis.metrics import calculate_profit_factor, calculate_total_return, calculate_win_rate
+        from src.analysis.metrics import (
+            calculate_profit_factor,
+            calculate_total_return,
+            calculate_win_rate,
+        )
 
         total_return = calculate_total_return(initial_balance, final_equity)
         win_rate = calculate_win_rate(trades)

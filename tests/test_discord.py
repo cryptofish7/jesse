@@ -9,7 +9,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import httpx
 import pytest
 
-from src.alerts.discord import COLOR_BLUE, COLOR_GREEN, COLOR_ORANGE, COLOR_RED, DiscordAlerter
+from src.alerts.discord import COLOR_BLUE, COLOR_GREEN, COLOR_RED, DiscordAlerter
 from src.core.types import Position, Trade
 
 # --- Helpers ---
