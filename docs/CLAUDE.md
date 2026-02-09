@@ -257,7 +257,9 @@ See `PRD.md` Section 4 for data structure specifications and `ARCHITECTURE.md` f
 
 ## Common Tasks
 
-**Add a strategy:**
+**Create a strategy from natural language:** Use the `strategy-builder` skill (`.claude/skills/strategy-builder/SKILL.md`). It guides through requirements, design, implementation, and verification. Outputs a ready-to-backtest file in `strategies/`.
+
+**Add a strategy manually:**
 ```python
 # strategies/my_strategy.py
 from src.strategy.base import Strategy
@@ -265,7 +267,7 @@ from src.core.types import Signal, MultiTimeframeData, Portfolio
 
 class MyStrategy(Strategy):
     timeframes = ['1m', '4h']
-    
+
     def on_candle(self, data: MultiTimeframeData, portfolio: Portfolio) -> list[Signal]:
         # Your logic here
         return []

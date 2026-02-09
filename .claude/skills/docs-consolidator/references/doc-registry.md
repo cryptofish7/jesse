@@ -9,6 +9,7 @@ Each doc has ONE purpose. Information belongs in the doc that owns that domain.
 | `docs/PRD.md` | Product requirements: user stories, feature specs, business rules | Requirements (functional IDs), user stories, success criteria, non-goals, glossary |
 | `docs/ARCHITECTURE.md` | System design: components, data flow, storage, concurrency, deployment | Component interfaces, data flow diagrams, concurrency model, error handling, schemas, config, deployment, dependencies, file structure, testing strategy |
 | `docs/TASKS.md` | Development tasks and progress tracking | Milestones, task checklists, progress summary |
+| `.claude/skills/strategy-builder/SKILL.md` | Strategy-builder skill: workflow for creating strategies from natural language | Strategy creation phases, framework API reference, implementation rules |
 
 ## Overlap Rules
 

@@ -800,6 +800,8 @@ class Settings(BaseSettings):
 ```
 jesse/
 ├── CLAUDE.md -> docs/CLAUDE.md  # Symlink
+├── .claude/skills/              # Claude Code skills
+│   └── strategy-builder/        # Create strategies from natural language
 ├── src/
 │   ├── __init__.py
 │   ├── core/
