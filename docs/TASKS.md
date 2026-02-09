@@ -582,8 +582,8 @@ See `PRD.md` Section 6 for the full list of post-v1 enhancements.
   - [x] Phase 2: Design review against framework interfaces
   - [x] Phase 3: Implementation with framework patterns and rules
   - [x] Phase 4: Verification (lint, typecheck, load test)
-- [x] Remove Gemini-based strategy generation code (`src/strategy/generator.py`, `src/strategy/prompts.py`, `tests/test_generator.py`)
-- [x] Revert Gemini-related changes to `main.py`, `src/config.py`, `pyproject.toml`, `.env.example`
+- [x] Confirmed Gemini-based generation code (`src/strategy/generator.py`, `src/strategy/prompts.py`, `tests/test_generator.py`) was never merged to main — no removal needed
+- [x] Confirmed Gemini-related changes to `main.py`, `src/config.py`, `pyproject.toml`, `.env.example` were never merged — no revert needed
 - [x] Update documentation to reference the new skill
 
 ---

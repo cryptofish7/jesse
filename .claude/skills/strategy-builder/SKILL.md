@@ -102,7 +102,7 @@ candle.body                    # abs(close - open)
 # Creating signals
 Signal.open_long(size_percent=0.01, stop_loss=95000, take_profit=105000)
 Signal.open_short(size_percent=0.01, stop_loss=105000, take_profit=95000)
-Signal.close(position_id="...")   # None closes all positions
+Signal.close(position_id="...")   # None closes the first open position
 
 # Portfolio access
 portfolio.balance              # Current cash balance

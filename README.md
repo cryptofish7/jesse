@@ -33,7 +33,7 @@ If you use [Claude Code](https://claude.com/claude-code), the project includes a
 
 ```
 claude
-> /strategy-builder
+> Create a new trading strategy
 ```
 
 The skill outputs a ready-to-backtest strategy file in `strategies/`.
