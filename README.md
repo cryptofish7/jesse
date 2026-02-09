@@ -27,6 +27,19 @@ cp .env.example .env
 
 ## Strategy Development
 
+### Creating strategies with Claude Code
+
+If you use [Claude Code](https://claude.com/claude-code), the project includes a **strategy-builder** skill that creates strategies from natural language descriptions. Describe your trading idea in plain English and the skill walks through requirements gathering, design review, implementation, and verification.
+
+```
+claude
+> Create a new trading strategy
+```
+
+The skill outputs a ready-to-backtest strategy file in `strategies/`.
+
+### Writing strategies manually
+
 Strategies inherit from `Strategy` and implement a single method: `on_candle()`. The engine calls this on every 1-minute candle close, passing all declared timeframes simultaneously.
 
 ### Minimal Example

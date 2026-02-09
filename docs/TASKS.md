@@ -573,6 +573,21 @@ See `PRD.md` Section 6 for the full list of post-v1 enhancements.
 
 ---
 
+## Milestone 18: Strategy Builder Skill
+
+**Goal:** Enable strategy creation from natural language descriptions using a Claude Code skill, replacing the earlier Gemini-based code generation approach.
+
+- [x] Create `.claude/skills/strategy-builder/SKILL.md` with full workflow
+  - [x] Phase 1: Requirements gathering with terminology clarification
+  - [x] Phase 2: Design review against framework interfaces
+  - [x] Phase 3: Implementation with framework patterns and rules
+  - [x] Phase 4: Verification (lint, typecheck, load test)
+- [x] Confirmed Gemini-based generation code (`src/strategy/generator.py`, `src/strategy/prompts.py`, `tests/test_generator.py`) was never merged to main — no removal needed
+- [x] Confirmed Gemini-related changes to `main.py`, `src/config.py`, `pyproject.toml`, `.env.example` were never merged — no revert needed
+- [x] Update documentation to reference the new skill
+
+---
+
 ## Progress Summary
 
 | Milestone | Status | Tasks |
@@ -594,5 +609,6 @@ See `PRD.md` Section 6 for the full list of post-v1 enhancements.
 | 15. Documentation & Polish | Complete | 5/5 |
 | 16. Future Enhancements | Backlog | — |
 | 17. Forward Test Duration Limit | Complete | 7/7 |
+| 18. Strategy Builder Skill | Complete | 4/4 |
 
-**Total: 69/69 tasks complete**
+**Total: 73/73 tasks complete**
